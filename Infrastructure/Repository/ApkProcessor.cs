@@ -8,10 +8,8 @@ using System.Xml;
 
 namespace APKVersionControlAPI.Infrastructure.Repository
 {
-    public class FIleRepository : IFIleRepository
+    public class ApkProcessor : IApkProcessor
     {
-
-
 
         public List<ApkFileDto> GetAllApk(GenericParameters parameters)
         {
@@ -79,7 +77,7 @@ namespace APKVersionControlAPI.Infrastructure.Repository
             return apkFileDtos;
         }
 
-        public ApkFileDto ExtractApkInfo(string? apkFilePath = null, Stream? apkFileStream = null)
+        public ApkFileDto ExtractApkInfo(string? apkFilePath, Stream? apkFileStream = null)
         {
             if (apkFilePath == null && apkFileStream == null)
                 throw new ArgumentException("Debes proporcionar una ruta de archivo o un flujo de datos.");

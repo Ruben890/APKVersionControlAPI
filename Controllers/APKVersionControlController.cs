@@ -1,3 +1,4 @@
+using APKVersionControlAPI.Interfaces.IServices;
 using APKVersionControlAPI.Shared;
 using APKVersionControlAPI.Shared.QueryParameters;
 using Microsoft.AspNetCore.Mvc;
@@ -9,7 +10,11 @@ namespace APKVersionControlAPI.Controllers
     [Route("api/APKVersionControl")]
     public class APKVersionControlController : ControllerBase
     {
-
+        private readonly IAPKVersionControlServices _aPKVersionControl;
+        public APKVersionControlController(IAPKVersionControlServices aPKVersionControl)
+        {
+            _aPKVersionControl = aPKVersionControl;
+        }
 
 
         [HttpPost("upload-apk")]
@@ -18,7 +23,7 @@ namespace APKVersionControlAPI.Controllers
             var response = new BaseResponse();
             try
             {
-                
+                return Ok(_aPKVersionControl.UploadApkFile(file));
             }
             catch (Exception ex)
             {

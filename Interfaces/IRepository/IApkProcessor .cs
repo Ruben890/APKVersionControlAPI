@@ -3,9 +3,9 @@ using APKVersionControlAPI.Shared.QueryParameters;
 
 namespace APKVersionControlAPI.Interfaces.IRepository
 {
-    public interface IFIleRepository
+    public interface IApkProcessor
     {
-        ApkFileDto ExtractApkInfo(string? apkFilePath = null, Stream? apkFileStream = null);
+        ApkFileDto ExtractApkInfo(string? apkFilePath, Stream? apkFileStream = null);
         List<ApkFileDto> GetAllApk(GenericParameters parameters);
     }
 }

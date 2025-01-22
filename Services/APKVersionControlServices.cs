@@ -1,5 +1,7 @@
-﻿using APKVersionControlAPI.Interfaces.IServices;
+﻿using APKVersionControlAPI.Interfaces.IRepository;
+using APKVersionControlAPI.Interfaces.IServices;
 using APKVersionControlAPI.Shared;
+using APKVersionControlAPI.Shared.Dto;
 using Microsoft.AspNetCore.Http;
 using System;
 using System.IO;
@@ -9,44 +11,74 @@ namespace APKVersionControlAPI.Services
 {
     public class APKVersionControlServices : IAPKVersionControlServices
     {
+        private readonly IApkProcessor _apkProcessor;
+        public APKVersionControlServices(IApkProcessor processor)
+        {
+            _apkProcessor = processor;
+        }
+
         public async Task<string?> UploadApkFile(IFormFile file)
         {
             try
             {
-                // Check if the file has content
+                // Verificar que el archivo tenga contenido
                 if (file.Length <= 0)
                 {
-                    throw new ArgumentException("The file is empty.");
+                    throw new ArgumentException("El archivo está vacío.");
                 }
 
-                // Validate that the file is an APK
+                // Validar que el archivo sea un APK
                 if (!string.Equals(Path.GetExtension(file.FileName), ".apk", StringComparison.OrdinalIgnoreCase))
                 {
-                    throw new ArgumentException("The file is not a valid APK.");
+                    throw new ArgumentException("El archivo no es un APK válido.");
                 }
 
-                // Check that only one file has been sent
+                // Verificar que se haya recibido un archivo
                 if (file == null)
                 {
-                    throw new ArgumentException("No file has been received.");
+                    throw new ArgumentException("No se ha recibido ningún archivo.");
                 }
 
-                // Optional: You could validate the file name or size if needed.
-                // If you want to save the file, you can do it in the following step:
-                // var path = Path.Combine("destination_path", file.FileName);
-                // using (var stream = new FileStream(path, FileMode.Create))
-                // {
-                //     await file.CopyToAsync(stream);
-                // }
+                // Ruta para guardar el archivo dentro de wwwroot/Files
+                string folderPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "Files");
 
-                return "APK file received successfully.";
+                // Crear la carpeta 'Files' si no existe
+                if (!Directory.Exists(folderPath))
+                {
+                    Directory.CreateDirectory(folderPath);
+                }
+
+                // Extraer información del archivo APK
+                ApkFileDto? apkInfo = null;
+                using (var stream = file.OpenReadStream())
+                {
+                    apkInfo = _apkProcessor.ExtractApkInfo(null, stream);
+                }
+
+                if (apkInfo == null)
+                {
+                    throw new ArgumentException("No se pudo extraer la información del APK.");
+                }
+
+                // Ruta completa para el archivo
+                string filePath = Path.Combine(folderPath, $"{file.FileName}-{apkInfo.Version}");
+
+                // Guardar el archivo en la carpeta 'Files'
+                using (var stream = new FileStream(filePath, FileMode.Create))
+                {
+                    await file.CopyToAsync(stream);
+                }
+
+                return $"Archivo APK recibido y guardado correctamente en: {filePath}";
             }
-
-            catch (Exception)
+            catch (Exception ex)
             {
-                throw;
+                // Manejar cualquier error
+                return $"Error: {ex.Message}";
             }
         }
+
+
 
     }
 }

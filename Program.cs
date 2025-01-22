@@ -1,4 +1,8 @@
-﻿using Hangfire;
+﻿using APKVersionControlAPI.Infrastructure.Repository;
+using APKVersionControlAPI.Interfaces.IRepository;
+using APKVersionControlAPI.Interfaces.IServices;
+using APKVersionControlAPI.Services;
+using Hangfire;
 using Hangfire.MemoryStorage;
 using HealthCenterAPI.Extencion;
 using Microsoft.Extensions.FileProviders;
@@ -13,10 +17,12 @@ builder.Services.AddControllers();
 builder.Services.AddOpenApi();
 builder.Services.Configure<IISOptions>(options => { });
 builder.Services.AddHangfire(config => config.UseMemoryStorage());
+builder.Services.AddScoped<IAPKVersionControlServices, APKVersionControlServices>();
+builder.Services.AddScoped<IApkProcessor, ApkProcessor>();
 builder.Services.ConfigureBackgroundJobs();
 builder.Services.AddHangfireServer();
 builder.Services.AddOpenApi();
-builder.Services.AddMemoryCache();
+
 
 builder.Services.AddCors(options =>
 {
