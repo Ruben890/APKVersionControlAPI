@@ -79,7 +79,7 @@ namespace APKVersionControlAPI.Infrastructure.Repository
             return apkFileDtos;
         }
 
-        private ApkFileDto ExtractApkInfo(string? apkFilePath = null, Stream? apkFileStream = null)
+        public ApkFileDto ExtractApkInfo(string? apkFilePath = null, Stream? apkFileStream = null)
         {
             if (apkFilePath == null && apkFileStream == null)
                 throw new ArgumentException("Debes proporcionar una ruta de archivo o un flujo de datos.");
@@ -145,7 +145,6 @@ namespace APKVersionControlAPI.Infrastructure.Repository
 
             return apkFileDto;
         }
-
 
     }
 }
