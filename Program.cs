@@ -5,6 +5,8 @@ using APKVersionControlAPI.Services;
 using Hangfire;
 using Hangfire.MemoryStorage;
 using HealthCenterAPI.Extencion;
+using Microsoft.AspNetCore.Http.Features;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.Extensions.FileProviders;
 using Newtonsoft.Json.Serialization;
 using Scalar.AspNetCore;
@@ -24,6 +26,11 @@ builder.Services.AddHangfireServer();
 builder.Services.AddOpenApi();
 
 
+builder.Services.Configure<FormOptions>(options =>
+{
+    options.MultipartBodyLengthLimit = 10485760; // Adjust according to your needs
+});
+
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAll", builder =>
@@ -33,8 +40,6 @@ builder.Services.AddCors(options =>
                .AllowAnyMethod();
     });
 });
-
-
 
 builder.Services.AddControllers()
     .AddNewtonsoftJson(options =>
@@ -64,7 +69,6 @@ if (app.Environment.IsProduction())
 
     app.UseHttpsRedirection();
 }
-
 
 // Configuración de archivos estáticos basada en el sistema operativo
 if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX) || RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
@@ -103,6 +107,11 @@ else if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
 }
 
 
+app.UseForwardedHeaders(new ForwardedHeadersOptions
+{
+    ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto,
+});
+
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
@@ -119,14 +128,7 @@ if (app.Environment.IsDevelopment())
     app.UseHangfireDashboard();
 }
 
-app.UseRouting();
-
 app.UseCors("AllowAll");
-
-app.UseHttpsRedirection();
-
-app.UseAuthorization();
-
+app.UseRouting();
 app.MapControllers();
-
 app.Run();

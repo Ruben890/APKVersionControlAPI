@@ -7,8 +7,8 @@ using System.Reflection.Metadata;
 
 namespace APKVersionControlAPI.Controllers
 {
-    [ApiController]
     [Route("api/APKVersionControl")]
+    [ApiController]
     public class APKVersionControlController : ControllerBase
     {
         private readonly IAPKVersionControlServices _aPKVersionControl;
