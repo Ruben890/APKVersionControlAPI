@@ -6,8 +6,6 @@ namespace APKVersionControlAPI.Shared.Dto
     public class ApkFileDto
     {
         public IFormFile? File { get; set; }
-        public string? Name { get; set; } = null!;
-        public string? FileUrl { get; set; }
         public decimal? Size { get; set; }
         public decimal? Version { get; set; } = 0m!;
         public DateTime? CreatedAt { get; set; }
