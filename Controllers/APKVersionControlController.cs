@@ -1,5 +1,6 @@
 using APKVersionControlAPI.Interfaces.IServices;
 using APKVersionControlAPI.Shared;
+using APKVersionControlAPI.Shared.Dto;
 using APKVersionControlAPI.Shared.QueryParameters;
 using Microsoft.AspNetCore.Mvc;
 using System.Reflection.Metadata;
@@ -18,12 +19,12 @@ namespace APKVersionControlAPI.Controllers
 
 
         [HttpPost("upload-apk")]
-        public async Task<IActionResult> UploadApkFile([FromForm] IFormFile file)
+        public IActionResult UploadApkFile([FromForm] ApkFileDto file)
         {
             var response = new BaseResponse();
             try
             {
-                return Ok(_aPKVersionControl.UploadApkFile(file));
+                return Ok(_aPKVersionControl.UploadApkFile(file.File!));
             }
             catch (Exception ex)
             {
