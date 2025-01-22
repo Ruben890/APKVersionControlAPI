@@ -1,24 +1,26 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk.Web">
 
-  <PropertyGroup>
-    <TargetFramework>net9.0</TargetFramework>
-    <Nullable>enable</Nullable>
-    <ImplicitUsings>enable</ImplicitUsings>
-  </PropertyGroup>
+	<PropertyGroup>
+		<TargetFramework>net9.0</TargetFramework>
+		<Nullable>enable</Nullable>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<EnableDefaultContentItems>false</EnableDefaultContentItems>
+	</PropertyGroup>
 
-  <ItemGroup>
-    <PackageReference Include="Hangfire.AspNetCore" Version="1.8.17" />
-    <PackageReference Include="Hangfire.MemoryStorage" Version="1.8.1.1" />
-    <PackageReference Include="Microsoft.AspNetCore.Mvc.NewtonsoftJson" Version="9.0.1" />
-    <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="9.0.1" />
-    <PackageReference Include="Scalar.AspNetCore" Version="2.0.2" />
-  </ItemGroup>
+	<ItemGroup>
+		<PackageReference Include="Hangfire.AspNetCore" Version="1.8.17" />
+		<PackageReference Include="Hangfire.MemoryStorage" Version="1.8.1.1" />
+		<PackageReference Include="Microsoft.AspNetCore.Mvc.NewtonsoftJson" Version="9.0.1" />
+		<PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="9.0.1" />
+		<PackageReference Include="Scalar.AspNetCore" Version="2.0.2" />
+	</ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="Infrastructure\Jobs\" />
-    <Folder Include="wwwroot\" />
-  </ItemGroup>
-	
+	<ItemGroup>
+		<Folder Include="Infrastructure\Jobs\" />
+		<Folder Include="wwwroot\" />
+		<Folder Include="wwwroot\Files\" />
+	</ItemGroup>
+
 	<ItemGroup>
 		<!-- Incluye los archivos staticos  en el directorio wwwroot de la salida -->
 		<Content Include="wwwroot\**/*">
@@ -26,9 +28,16 @@
 			<LinkBase>wwwroot</LinkBase>
 		</Content>
 	</ItemGroup>
-	
+
 	<ItemGroup>
-	  <None Include="Infrastructure\Repository\ApkProcessor.cs" />
+		<!-- Archivo AXMLPrinter2.jar -->
+		<None Include="AXMLPrinter2.jar">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</None>
+	</ItemGroup>
+
+	<ItemGroup>
+		<None Include="Infrastructure\Repository\ApkProcessor.cs" />
 	</ItemGroup>
 
 </Project>

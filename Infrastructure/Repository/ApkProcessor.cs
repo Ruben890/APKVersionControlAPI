@@ -3,8 +3,10 @@ using APKVersionControlAPI.Interfaces.IRepository;
 using APKVersionControlAPI.Shared.Dto;
 using APKVersionControlAPI.Shared.QueryParameters;
 using Newtonsoft.Json.Linq;
+using System.Diagnostics;
 using System.IO.Compression;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Xml;
 
 namespace APKVersionControlAPI.Infrastructure.Repository
@@ -119,48 +121,101 @@ namespace APKVersionControlAPI.Infrastructure.Repository
 
                 if (File.Exists(manifestPath))
                 {
-                    XmlReaderSettings readerSettings = new XmlReaderSettings
+                    // Validar si Java 8 o superior está instalado
+                    var javaVersion = GetJavaVersion();
+                    if (javaVersion == null || !javaVersion.StartsWith("1.8") && !int.TryParse(javaVersion.Split('.')[0], out var major) && major < 8)
                     {
-                        CheckCharacters = false, // Ignorar caracteres no válidos
-                        IgnoreComments = true,  // Ignorar comentarios
-                        IgnoreWhitespace = true // Ignorar espacios en blanco
-                    };
-
-                    XmlDocument xmlDoc = new XmlDocument();
-
-                    // Cargar el archivo con XmlReader
-                    using (XmlReader reader = XmlReader.Create(manifestPath, readerSettings))
-                    {
-                        xmlDoc.Load(reader);
+                        throw new InvalidOperationException("Java 8 o superior no está instalado.");
                     }
 
-                    // Sobrescribir el archivo con configuraciones de compatibilidad
-                    XmlWriterSettings xmlWriterSettings = new XmlWriterSettings
-                    {
-                        Encoding = Encoding.UTF8,
-                        CheckCharacters = false
-                    };
+                    // Generar archivo decodificado usando AXMLPrinter2.jar
+                    string decodedManifestPath = Path.Combine(tempPath, "ManifestDecode.xml");
 
-                    using (var writer = XmlWriter.Create(manifestPath, xmlWriterSettings))
-                    {
-                        xmlDoc.Save(writer);
-                    }
+                    // Ruta del archivo JAR en el directorio raíz del proyecto
+                    string jarPath = Path.Combine(Directory.GetCurrentDirectory(), "AXMLPrinter2.jar");
 
-                    // Extraer información del manifest
-                    XmlNode manifestNode = xmlDoc.SelectSingleNode("/manifest")!;
-                    if (manifestNode != null)
+
+                    string command = $"java -jar \"{jarPath}\" \"{manifestPath}\" > \"{decodedManifestPath}\"";
+                    ExecuteCommand(command);
+
+                    if (File.Exists(decodedManifestPath))
                     {
-                        apkFileDto.Version = manifestNode.Attributes?["android:versionName"]?.Value;
+                        XmlDocument xmlDoc = new XmlDocument();
+                        xmlDoc.Load(decodedManifestPath);
+
+                        XmlNode manifestNode = xmlDoc.SelectSingleNode("/manifest")!;
+                        if (manifestNode != null)
+                        {
+                            apkFileDto.Version = manifestNode.Attributes?["android:versionName"]?.Value;
+                        }
                     }
                 }
             }
             finally
             {
-                //Directory.Delete(tempPath, true);
+                // Limpiar el directorio temporal
+                Directory.Delete(tempPath, true);
             }
 
             return apkFileDto;
         }
+
+        private static string? GetJavaVersion()
+        {
+            try
+            {
+                var process = new Process
+                {
+                    StartInfo = new ProcessStartInfo
+                    {
+                        FileName = "java",
+                        Arguments = "-version",
+                        RedirectStandardError = true,
+                        UseShellExecute = false,
+                        CreateNoWindow = true
+                    }
+                };
+
+                process.Start();
+                string output = process.StandardError.ReadToEnd();
+                process.WaitForExit();
+
+                // Extraer la versión de Java
+                var match = Regex.Match(output, @"\d+\.\d+\.\d+");
+                return match.Success ? match.Value : null;
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
+        private static void ExecuteCommand(string command)
+        {
+            bool isWindows = OperatingSystem.IsWindows();
+            var process = new Process
+            {
+                StartInfo = new ProcessStartInfo
+                {
+                    FileName = isWindows ? "cmd.exe" : "/bin/bash",
+                    Arguments = isWindows ? $"/C {command}" : $"-c \"{command}\"",
+                    RedirectStandardOutput = true,
+                    RedirectStandardError = true,
+                    UseShellExecute = false,
+                    CreateNoWindow = true
+                }
+            };
+
+            process.Start();
+            process.WaitForExit();
+
+            if (process.ExitCode != 0)
+            {
+                string error = process.StandardError.ReadToEnd();
+                throw new InvalidOperationException($"Error ejecutando el comando: {error}");
+            }
+        }
+
 
 
 

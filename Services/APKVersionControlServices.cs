@@ -57,8 +57,8 @@ namespace APKVersionControlAPI.Services
 
                 // Ruta completa para el archivo
                 string sanitizedFileName = Path.GetFileNameWithoutExtension(file.FileName); // Nombre sin extensión
-                sanitizedFileName = sanitizedFileName.Replace(" ", "_"); // Opcional: reemplazar espacios por guiones bajos
-                string fileName = $"{sanitizedFileName}-{apkInfo.Version}.apk";
+                sanitizedFileName = sanitizedFileName.Replace(" ", "_");
+                string fileName = $"{sanitizedFileName}-{apkInfo.Version}/{apkInfo.CreatedAt}.apk";
                 string filePath = Path.Combine(folderPath, fileName);
 
                 // Guardar el archivo en la carpeta 'Files'
