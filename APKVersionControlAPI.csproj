@@ -26,5 +26,9 @@
 			<LinkBase>wwwroot</LinkBase>
 		</Content>
 	</ItemGroup>
+	
+	<ItemGroup>
+	  <None Include="Infrastructure\Repository\ApkProcessor.cs" />
+	</ItemGroup>
 
 </Project>
