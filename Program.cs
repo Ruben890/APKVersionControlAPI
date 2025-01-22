@@ -26,10 +26,10 @@ builder.Services.AddHangfireServer();
 builder.Services.AddOpenApi();
 
 
-builder.Services.Configure<FormOptions>(options =>
-{
-    options.MultipartBodyLengthLimit = 10485760; // Adjust according to your needs
-});
+//builder.Services.Configure<FormOptions>(options =>
+//{
+//    options.MultipartBodyLengthLimit = 10485760; // Adjust according to your needs
+//});
 
 builder.Services.AddCors(options =>
 {

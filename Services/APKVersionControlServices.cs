@@ -22,21 +22,15 @@ namespace APKVersionControlAPI.Services
             try
             {
                 // Verificar que el archivo tenga contenido
-                if (file.Length <= 0)
+                if (file == null || file.Length <= 0)
                 {
-                    throw new ArgumentException("El archivo está vacío.");
+                    throw new ArgumentException("El archivo está vacío o no se ha recibido.");
                 }
 
                 // Validar que el archivo sea un APK
                 if (!string.Equals(Path.GetExtension(file.FileName), ".apk", StringComparison.OrdinalIgnoreCase))
                 {
                     throw new ArgumentException("El archivo no es un APK válido.");
-                }
-
-                // Verificar que se haya recibido un archivo
-                if (file == null)
-                {
-                    throw new ArgumentException("No se ha recibido ningún archivo.");
                 }
 
                 // Ruta para guardar el archivo dentro de wwwroot/Files
@@ -48,10 +42,11 @@ namespace APKVersionControlAPI.Services
                     Directory.CreateDirectory(folderPath);
                 }
 
-                // Extraer información del archivo APK
+                // Extraer información del archivo APK (usando un servicio/apkProcessor personalizado)
                 ApkFileDto? apkInfo = null;
                 using (var stream = file.OpenReadStream())
                 {
+                    // Método personalizado para extraer información del APK
                     apkInfo = _apkProcessor.ExtractApkInfo(null, stream);
                 }
 
@@ -61,10 +56,13 @@ namespace APKVersionControlAPI.Services
                 }
 
                 // Ruta completa para el archivo
-                string filePath = Path.Combine(folderPath, $"{file.FileName}-{apkInfo.Version}");
+                string sanitizedFileName = Path.GetFileNameWithoutExtension(file.FileName); // Nombre sin extensión
+                sanitizedFileName = sanitizedFileName.Replace(" ", "_"); // Opcional: reemplazar espacios por guiones bajos
+                string fileName = $"{sanitizedFileName}-{apkInfo.Version}.apk";
+                string filePath = Path.Combine(folderPath, fileName);
 
                 // Guardar el archivo en la carpeta 'Files'
-                using (var stream = new FileStream(filePath, FileMode.Create))
+                await using (var stream = new FileStream(filePath, FileMode.Create))
                 {
                     await file.CopyToAsync(stream);
                 }
@@ -77,6 +75,7 @@ namespace APKVersionControlAPI.Services
                 return $"Error: {ex.Message}";
             }
         }
+
 
 
 

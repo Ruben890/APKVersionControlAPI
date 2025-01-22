@@ -4,6 +4,7 @@ using APKVersionControlAPI.Shared.Dto;
 using APKVersionControlAPI.Shared.QueryParameters;
 using Newtonsoft.Json.Linq;
 using System.IO.Compression;
+using System.Text;
 using System.Xml;
 
 namespace APKVersionControlAPI.Infrastructure.Repository
@@ -87,7 +88,7 @@ namespace APKVersionControlAPI.Infrastructure.Repository
 
             var apkFileDto = new ApkFileDto
             {
-                Name = apkFilePath != null ? Path.GetFileNameWithoutExtension(apkFilePath): "ArchivoDesconocido",
+                Name = apkFilePath != null ? Path.GetFileNameWithoutExtension(apkFilePath) : "ArchivoDesconocido",
                 Size = apkFilePath != null
                     ? Math.Round(new FileInfo(apkFilePath).Length / (1024.0 * 1024.0), 2)
                     : Math.Round(apkFileStream!.Length / (1024.0 * 1024.0), 2),
@@ -102,47 +103,66 @@ namespace APKVersionControlAPI.Infrastructure.Repository
             {
                 if (apkFilePath != null)
                 {
-                    // Descomprimir el archivo APK desde la ruta
                     ZipFile.ExtractToDirectory(apkFilePath, tempPath);
                 }
                 else if (apkFileStream != null)
                 {
-                    // Crear un archivo temporal a partir del flujo de datos
                     string tempApkPath = Path.Combine(tempPath, "temp.apk");
                     using (var fileStream = new FileStream(tempApkPath, FileMode.Create, FileAccess.Write))
                     {
                         apkFileStream.CopyTo(fileStream);
                     }
-
-                    // Descomprimir el archivo APK temporal
                     ZipFile.ExtractToDirectory(tempApkPath, tempPath);
                 }
 
-                // Ruta al archivo AndroidManifest.xml extraído
                 string manifestPath = Path.Combine(tempPath, "AndroidManifest.xml");
 
                 if (File.Exists(manifestPath))
                 {
-                    // Leer y analizar el archivo AndroidManifest.xml
-                    XmlDocument xmlDoc = new XmlDocument();
-                    xmlDoc.Load(manifestPath);
+                    XmlReaderSettings readerSettings = new XmlReaderSettings
+                    {
+                        CheckCharacters = false, // Ignorar caracteres no válidos
+                        IgnoreComments = true,  // Ignorar comentarios
+                        IgnoreWhitespace = true // Ignorar espacios en blanco
+                    };
 
-                    // Extraer la versión de la aplicación
+                    XmlDocument xmlDoc = new XmlDocument();
+
+                    // Cargar el archivo con XmlReader
+                    using (XmlReader reader = XmlReader.Create(manifestPath, readerSettings))
+                    {
+                        xmlDoc.Load(reader);
+                    }
+
+                    // Sobrescribir el archivo con configuraciones de compatibilidad
+                    XmlWriterSettings xmlWriterSettings = new XmlWriterSettings
+                    {
+                        Encoding = Encoding.UTF8,
+                        CheckCharacters = false
+                    };
+
+                    using (var writer = XmlWriter.Create(manifestPath, xmlWriterSettings))
+                    {
+                        xmlDoc.Save(writer);
+                    }
+
+                    // Extraer información del manifest
                     XmlNode manifestNode = xmlDoc.SelectSingleNode("/manifest")!;
                     if (manifestNode != null)
                     {
-                        apkFileDto.Version = manifestNode.Attributes!["android:versionName"]?.Value;
+                        apkFileDto.Version = manifestNode.Attributes?["android:versionName"]?.Value;
                     }
                 }
             }
             finally
             {
-                // Eliminar el directorio temporal y su contenido
-                Directory.Delete(tempPath, true);
+                //Directory.Delete(tempPath, true);
             }
 
             return apkFileDto;
         }
+
+
 
     }
 }
