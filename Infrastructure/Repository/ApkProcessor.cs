@@ -79,14 +79,21 @@ namespace APKVersionControlAPI.Infrastructure.Repository
             return apkFileDtos;
         }
 
-        private ApkFileDto ExtractApkInfo(string apkFilePath)
+        private ApkFileDto ExtractApkInfo(string? apkFilePath = null, Stream? apkFileStream = null)
         {
+            if (apkFilePath == null && apkFileStream == null)
+                throw new ArgumentException("Debes proporcionar una ruta de archivo o un flujo de datos.");
+
+            if (apkFileStream != null && !apkFileStream.CanRead)
+                throw new ArgumentException("El flujo de datos no es válido.", nameof(apkFileStream));
 
             var apkFileDto = new ApkFileDto
             {
-                Name = Path.GetFileNameWithoutExtension(apkFilePath),
-                Size = Math.Round(new FileInfo(apkFilePath).Length / (1024.0 * 1024.0), 2),
-                CreatedAt = File.GetCreationTime(apkFilePath),
+                Name = apkFilePath != null ? Path.GetFileNameWithoutExtension(apkFilePath): "ArchivoDesconocido",
+                Size = apkFilePath != null
+                    ? Math.Round(new FileInfo(apkFilePath).Length / (1024.0 * 1024.0), 2)
+                    : Math.Round(apkFileStream!.Length / (1024.0 * 1024.0), 2),
+                CreatedAt = apkFilePath != null ? File.GetCreationTime(apkFilePath) : DateTime.Now
             };
 
             // Crear un directorio temporal para extraer el contenido del APK
@@ -95,8 +102,23 @@ namespace APKVersionControlAPI.Infrastructure.Repository
 
             try
             {
-                // Descomprimir el archivo APK en el directorio temporal
-                ZipFile.ExtractToDirectory(apkFilePath, tempPath);
+                if (apkFilePath != null)
+                {
+                    // Descomprimir el archivo APK desde la ruta
+                    ZipFile.ExtractToDirectory(apkFilePath, tempPath);
+                }
+                else if (apkFileStream != null)
+                {
+                    // Crear un archivo temporal a partir del flujo de datos
+                    string tempApkPath = Path.Combine(tempPath, "temp.apk");
+                    using (var fileStream = new FileStream(tempApkPath, FileMode.Create, FileAccess.Write))
+                    {
+                        apkFileStream.CopyTo(fileStream);
+                    }
+
+                    // Descomprimir el archivo APK temporal
+                    ZipFile.ExtractToDirectory(tempApkPath, tempPath);
+                }
 
                 // Ruta al archivo AndroidManifest.xml extraído
                 string manifestPath = Path.Combine(tempPath, "AndroidManifest.xml");
@@ -123,7 +145,6 @@ namespace APKVersionControlAPI.Infrastructure.Repository
 
             return apkFileDto;
         }
-
 
 
     }
