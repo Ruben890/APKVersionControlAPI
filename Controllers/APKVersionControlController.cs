@@ -13,7 +13,7 @@ namespace APKVersionControlAPI.Controllers
 
 
         [HttpPost("upload-apk")]
-        public async Task<IActionResult> UploadApkFile([FromQuery] GenericParameters parameters, [FromForm] IFormFile file)
+        public async Task<IActionResult> UploadApkFile([FromForm] IFormFile file)
         {
             var response = new BaseResponse();
             try

@@ -6,10 +6,11 @@ namespace APKVersionControlAPI.Shared.Dto
     public class ApkFileDto
     {
         public IFormFile? File { get; set; }
-        public decimal? Size { get; set; }
-        public decimal? Version { get; set; } = 0m!;
+        public string? Name { get; set; }
+        public double? Size { get; set; }
+        public string? Version { get; set; }
         public DateTime? CreatedAt { get; set; }
-        public bool? IsCurrentVersion { get; set; } = null!;
-        public bool? IsPreviousVersion { get; set; } = null!;
+        public bool? IsCurrentVersion { get; set; } = false!;
+        public bool? IsPreviousVersion { get; set; } = false!;
     }
 }

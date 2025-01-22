@@ -83,8 +83,8 @@ if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX) || RuntimeInformation.IsOSPl
             const int durationInSeconds = 60 * 60 * 24 * 7; // 7 días
             ctx.Context.Response.Headers.Append("Cache-Control", $"public, max-age={durationInSeconds}");
 
-            // Bloquear acceso a la carpeta Templates
-            if (ctx.File.PhysicalPath!.Contains(Path.Combine("wwwroot", "APK")))
+            // Bloquear acceso a la carpeta Files
+            if (ctx.File.PhysicalPath!.Contains(Path.Combine("wwwroot", "Files")))
             {
                 ctx.Context.Response.StatusCode = StatusCodes.Status403Forbidden;
                 ctx.Context.Response.ContentLength = 0;

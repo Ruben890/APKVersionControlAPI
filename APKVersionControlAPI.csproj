@@ -16,8 +16,6 @@
 
   <ItemGroup>
     <Folder Include="Infrastructure\Jobs\" />
-    <Folder Include="Infrastructure\Repository\" />
-    <Folder Include="Interfaces\IRepository\" />
     <Folder Include="wwwroot\" />
   </ItemGroup>
 	
