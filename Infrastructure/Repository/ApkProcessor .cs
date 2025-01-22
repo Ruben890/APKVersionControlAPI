@@ -13,7 +13,6 @@ namespace APKVersionControlAPI.Infrastructure.Repository
 
 
 
-
         public List<ApkFileDto> GetAllApk(GenericParameters parameters)
         {
             var directoryPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "Files");
