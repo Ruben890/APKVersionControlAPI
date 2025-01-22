@@ -19,12 +19,12 @@ namespace APKVersionControlAPI.Controllers
 
 
         [HttpPost("upload-apk")]
-        public IActionResult UploadApkFile([FromForm] ApkFileDto file)
+        public IActionResult UploadApkFile([FromForm] FileDto request)
         {
             var response = new BaseResponse();
             try
             {
-                return Ok(_aPKVersionControl.UploadApkFile(file.File!));
+                return Ok(_aPKVersionControl.UploadApkFile(request.File!));
             }
             catch (Exception ex)
             {
