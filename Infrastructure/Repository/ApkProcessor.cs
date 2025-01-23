@@ -58,28 +58,6 @@ namespace APKVersionControlAPI.Infrastructure.Repository
 
             return sortedApkFiles;
         }
-
-        private List<ApkFileDto> ProcessApkFiles(IEnumerable<string> apkFilePaths)
-        {
-            var apkFileDtos = new List<ApkFileDto>();
-
-            foreach (var apkFilePath in apkFilePaths)
-            {
-                try
-                {
-                    var apkInfo = ExtractApkInfo(apkFilePath);
-                    apkFileDtos.Add(apkInfo);
-                }
-                catch (Exception ex)
-                {
-                    // Log de error o manejo adecuado en caso de que falte algún archivo o haya un problema
-                    Console.WriteLine($"Error procesando {apkFilePath}: {ex.Message}");
-                }
-            }
-
-            return apkFileDtos;
-        }
-
         public ApkFileDto ExtractApkInfo(string? apkFilePath, Stream? apkFileStream = null)
         {
             if (apkFilePath == null && apkFileStream == null)
@@ -158,7 +136,26 @@ namespace APKVersionControlAPI.Infrastructure.Repository
 
             return apkFileDto;
         }
+        private List<ApkFileDto> ProcessApkFiles(IEnumerable<string> apkFilePaths)
+        {
+            var apkFileDtos = new List<ApkFileDto>();
 
+            foreach (var apkFilePath in apkFilePaths)
+            {
+                try
+                {
+                    var apkInfo = ExtractApkInfo(apkFilePath);
+                    apkFileDtos.Add(apkInfo);
+                }
+                catch (Exception ex)
+                {
+                    // Log de error o manejo adecuado en caso de que falte algún archivo o haya un problema
+                    Console.WriteLine($"Error procesando {apkFilePath}: {ex.Message}");
+                }
+            }
+
+            return apkFileDtos;
+        }
         private static string? GetJavaVersion()
         {
             try
@@ -188,7 +185,6 @@ namespace APKVersionControlAPI.Infrastructure.Repository
                 return null;
             }
         }
-
         private static void ExecuteCommand(string command)
         {
             bool isWindows = OperatingSystem.IsWindows();
