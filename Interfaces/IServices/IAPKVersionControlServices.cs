@@ -8,6 +8,6 @@ namespace APKVersionControlAPI.Interfaces.IServices
     {
         string FindFileForDownload(GenericParameters parameters);
         Task<IEnumerable<ApkFileDto>> GetApkFiles(GenericParameters parameters);
-        Task<string?> UploadApkFile(IFormFile file, string Client);
+        Task<string?> UploadApkFile(IFormFile file, string? client = null);
     }
 }

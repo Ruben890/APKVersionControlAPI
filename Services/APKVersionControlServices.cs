@@ -19,7 +19,7 @@ namespace APKVersionControlAPI.Services
             _apkProcessor = processor;
         }
 
-        public async Task<string?> UploadApkFile(IFormFile file, string client)
+        public async Task<string?> UploadApkFile(IFormFile file, string? client = null)
         {
             try
             {
@@ -136,6 +136,8 @@ namespace APKVersionControlAPI.Services
             // Devolver la ruta del primer archivo encontrado
             return files.First();
         }
+
+
 
 
         /// <summary>
