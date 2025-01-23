@@ -118,7 +118,7 @@ La estructura final debería verse así:
 Para insertar un archivo APK en la API, sigue estos pasos:
 
 1. **Subir el Archivo APK**: Envía el archivo APK a la API mediante una solicitud HTTP POST.
-2. **Especificar Parámetros**: Puedes especificar parámetros como `Client`, el cual representa al cliente que le va a pertenecer esa APK en la solicitud.
+2. **Especificar Parámetros**: Puedes especificar parámetros como `Client`, el cual es un parámetro opcional que representa al cliente al que pertenecerá la APK en la solicitud. Si no se proporciona el parámetro `Client`, la APK no estará asociada a ningún cliente en específico y se guardará de forma general.
 3. **Respuesta**: La API devolverá un JSON con un mensaje indicando que se ha guardado el archivo. En caso contrario, lanzará una excepción.
 
 ### Obtener Información de un APK
