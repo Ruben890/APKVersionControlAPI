@@ -89,7 +89,7 @@ namespace APKVersionControlAPI.Services
             }
         }
 
-        
+
         public async Task<IEnumerable<ApkFileDto>> GetApkFiles(GenericParameters parameters) =>
             await _apkProcessor.GetAllApkAsync(parameters);
 
@@ -101,6 +101,61 @@ namespace APKVersionControlAPI.Services
                 throw new ArgumentException("IsDownload must be true to proceed with the download.");
             }
 
+            var baseDirectory = ValidateAndGetBaseDirectory(parameters);
+
+            // Construir el patrón de búsqueda
+            string searchPattern = $"{parameters.Name}-{parameters.Version}--*.apk";
+
+            // Buscar archivos que coincidan con el patrón
+            var files = Directory.GetFiles(baseDirectory, searchPattern, SearchOption.TopDirectoryOnly);
+
+            if (files.Length == 0)
+            {
+                throw new FileNotFoundException($"No file found with name {parameters.Name} and version {parameters.Version}.");
+            }
+
+            // Devolver la ruta del primer archivo encontrado
+            return files.First();
+        }
+
+        public void DeleteApkFile(GenericParameters parameters)
+        {
+            try
+            {
+                // Get the validated base directory
+                var baseDirectory = ValidateAndGetBaseDirectory(parameters);
+
+                // Build the search pattern
+                string searchPattern = $"{parameters.Name}-{parameters.Version}--*.apk";
+
+                // Find all files matching the pattern
+                var matchingFiles = Directory.GetFiles(baseDirectory, searchPattern, SearchOption.TopDirectoryOnly);
+
+                // Check if any files were found
+                if (matchingFiles.Length == 0)
+                {
+                    throw new FileNotFoundException($"No files matching the pattern '{searchPattern}' were found in {baseDirectory}.");
+                }
+
+                // Delete all matching files
+                foreach (var filePath in matchingFiles)
+                {
+                    File.Delete(filePath);
+                    Console.WriteLine($"The file {filePath} has been successfully deleted.");
+                }
+
+                Console.WriteLine($"{matchingFiles.Length} file(s) were deleted successfully.");
+            }
+            catch (Exception ex)
+            {
+                // Rethrow the exception with a custom message or handle it as needed
+                throw new Exception($"Error deleting the APK file(s): {ex.Message}", ex);
+            }
+        }
+
+        private string ValidateAndGetBaseDirectory(GenericParameters parameters)
+        {
+            
             // Validar que Name y Version no sean nulos o vacíos
             if (string.IsNullOrEmpty(parameters.Name) || string.IsNullOrEmpty(parameters.Version))
             {
@@ -122,28 +177,13 @@ namespace APKVersionControlAPI.Services
                 throw new DirectoryNotFoundException($"The directory {baseDirectory} does not exist.");
             }
 
-            // Construir el patrón de búsqueda
-            string searchPattern = $"{parameters.Name}-{parameters.Version}--*.apk";
-
-            // Buscar archivos que coincidan con el patrón
-            var files = Directory.GetFiles(baseDirectory, searchPattern, SearchOption.TopDirectoryOnly);
-
-            if (files.Length == 0)
-            {
-                throw new FileNotFoundException($"No file found with name {parameters.Name} and version {parameters.Version}.");
-            }
-
-            // Devolver la ruta del primer archivo encontrado
-            return files.First();
+            return baseDirectory;
         }
-
-
-
 
         /// <summary>
         /// Sanitiza el nombre del archivo para eliminar caracteres no válidos.
         /// </summary>
-        private static string SanitizeFileName(string fileName)
+        private string SanitizeFileName(string fileName)
         {
             if (string.IsNullOrWhiteSpace(fileName))
             {

@@ -65,10 +65,10 @@ namespace APKVersionControlAPI.Controllers
             var response = new BaseResponse();
             try
             {
-                // Validar que IsDownload sea true
-                if (!parameters.IsDownload.HasValue || !parameters.IsDownload.Value)
+
+                if (string.IsNullOrWhiteSpace(parameters.Name))
                 {
-                    response.Messages = "IsDownload must be true to proceed with the download.";
+                    response.Messages = "The 'Name' parameter is required and cannot be empty or whitespace.";
                     return BadRequest(response);
                 }
 
@@ -85,6 +85,31 @@ namespace APKVersionControlAPI.Controllers
                 // Devolver el archivo para descargar
                 var fileStream = new FileStream(filePath, FileMode.Open, FileAccess.Read);
                 return File(fileStream, "application/vnd.android.package-archive", Path.GetFileName(filePath));
+            }
+            catch (Exception ex)
+            {
+                response.Messages = ex.Message;
+                return BadRequest(response);
+            }
+        }
+
+
+        [HttpDelete("DeleteApkFile")]
+        public IActionResult DeleteApkFile([FromQuery] GenericParameters parameters)
+        {
+            var response = new BaseResponse();
+            try
+            {
+
+                if (string.IsNullOrWhiteSpace(parameters.Name))
+                {
+                    response.Messages = "The 'Name' parameter is required and cannot be empty or whitespace.";
+                    return BadRequest(response);
+                }
+
+                _aPKVersionControl.DeleteApkFile(parameters);
+
+                return Ok(response.Messages = "The APK file was deleted successfully.");
             }
             catch (Exception ex)
             {
