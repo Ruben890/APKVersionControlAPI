@@ -1,13 +1,11 @@
 ﻿using APKVersionControlAPI.Interfaces.IRepository;
 using APKVersionControlAPI.Shared.Dto;
 using APKVersionControlAPI.Shared.QueryParameters;
-using Newtonsoft.Json.Linq;
+using APKVersionControlAPI.Ultils;
 using System.Diagnostics;
-using System.IO.Compression;
-using System.Text;
 using System.Text.RegularExpressions;
 using System.Xml;
-using System.Xml.Linq;
+
 
 namespace APKVersionControlAPI.Infrastructure.Repository
 {
@@ -83,7 +81,7 @@ namespace APKVersionControlAPI.Infrastructure.Repository
             {
                 if (apkFilePath != null)
                 {
-                    await Task.Run(() => ZipFile.ExtractToDirectory(apkFilePath, tempPath));
+                    await Task.Run(() => FileCompressor.DecompressFile(apkFilePath, tempPath));
                 }
                 else if (apkFileStream != null)
                 {
@@ -92,7 +90,7 @@ namespace APKVersionControlAPI.Infrastructure.Repository
                     {
                         await apkFileStream.CopyToAsync(fileStream);
                     }
-                    await Task.Run(() => ZipFile.ExtractToDirectory(tempApkPath, tempPath));
+                    await Task.Run(() => FileCompressor.DecompressFile(tempApkPath, tempPath));
                 }
 
                 string manifestPath = Path.Combine(tempPath, "AndroidManifest.xml");

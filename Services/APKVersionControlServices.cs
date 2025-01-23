@@ -3,6 +3,7 @@ using APKVersionControlAPI.Interfaces.IServices;
 using APKVersionControlAPI.Shared;
 using APKVersionControlAPI.Shared.Dto;
 using APKVersionControlAPI.Shared.QueryParameters;
+using APKVersionControlAPI.Ultils;
 using Microsoft.AspNetCore.Http;
 using System;
 using System.IO;
@@ -23,32 +24,32 @@ namespace APKVersionControlAPI.Services
         {
             try
             {
-                // Check if the file has content
+                // Verifica si el archivo tiene contenido
                 if (file == null || file.Length <= 0)
                 {
                     throw new ArgumentException("The file is empty or has not been received.");
                 }
 
-                // Validate that the file is an APK
+                // Valida que el archivo sea un APK
                 if (!string.Equals(Path.GetExtension(file.FileName), ".apk", StringComparison.OrdinalIgnoreCase))
                 {
                     throw new ArgumentException("The file is not a valid APK.");
                 }
 
-                // Path to save the file within wwwroot/Files
+                // Ruta para guardar el archivo dentro de wwwroot/Files
                 string folderPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "Files");
 
-                // Create the 'Files' folder if it does not exist
+                // Crea la carpeta 'Files' si no existe
                 if (!Directory.Exists(folderPath))
                 {
                     Directory.CreateDirectory(folderPath);
                 }
 
-                // Extract information from the APK file (using a custom service/apkProcessor)
+                // Extrae información del archivo APK (usando un servicio personalizado/apkProcessor)
                 ApkFileDto? apkInfo = null;
                 using (var stream = file.OpenReadStream())
                 {
-                    // Custom method to extract information from the APK
+                    // Método personalizado para extraer información del APK
                     apkInfo = await _apkProcessor.ExtractApkInfoAsync(null, stream);
                 }
 
@@ -57,36 +58,45 @@ namespace APKVersionControlAPI.Services
                     throw new ArgumentException("Could not extract information from the APK.");
                 }
 
-                // Full path for the file
-                string sanitizedFileName = Path.GetFileNameWithoutExtension(file.FileName).Replace(" ", "_").Replace(".", "_").ToLower();
+                // Nombre del archivo sanitizado
+                string sanitizedFileName = Path.GetFileNameWithoutExtension(file.FileName)
+                    .Replace(" ", "_")
+                    .Replace(".", "_")
+                    .ToLower();
 
+                // Nombre del archivo con versión y fecha
                 string fileName = $"{sanitizedFileName}-{apkInfo.Version}--{apkInfo.CreatedAt?.ToString("yyyyMMdd")}.apk";
                 string filePath = Path.Combine(folderPath, fileName);
 
-                // Save the file to the 'Files' folder
+                // Guarda el archivo en la carpeta 'Files'
                 await using (var stream = new FileStream(filePath, FileMode.Create))
                 {
                     await file.CopyToAsync(stream);
                 }
 
-                // Compress the APK file to a ZIP file
+                // Comprime el archivo APK a un archivo ZIP
                 string zipFileName = Path.ChangeExtension(fileName, ".zip");
                 string zipFilePath = Path.Combine(folderPath, zipFileName);
 
-                using (var zipArchive = ZipFile.Open(zipFilePath, ZipArchiveMode.Create))
-                {
-                    zipArchive.CreateEntryFromFile(filePath, fileName);
-                }
+                // Comprime el archivo de manera asíncrona
+                await Task.Run(() => FileCompressor.CompressFile(filePath, zipFilePath));
 
-                // Optionally, delete the original APK file after compression
-                File.Delete(filePath);
+                // Elimina el archivo APK original solo si la compresión fue exitosa
+                if (File.Exists(zipFilePath))
+                {
+                    File.Delete(filePath);
+                }
+                else
+                {
+                    throw new InvalidOperationException("Failed to compress the APK file.");
+                }
 
                 return "APK file received, compressed, and saved successfully.";
             }
             catch (Exception ex)
             {
-                // Handle any errors
-                return $"Error: {ex.Message}";
+                // Maneja cualquier error y proporciona más detalles
+                return $"Error: {ex.Message}. StackTrace: {ex.StackTrace}";
             }
         }
 
