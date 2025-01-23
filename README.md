@@ -194,7 +194,7 @@ La API incluye un job programado que se ejecuta periódicamente para eliminar ar
 
 ## Configuración
 
-No se requiere configuración adicional más allá de tener Java 8 instalado y asegurarse de que `AXMLPrinter2.jar` esté en la ruta correcta. El job de limpieza automática está configurado para ejecutarse periódicamente según la configuración del sistema.
+No se requiere configuración adicional más allá de tener Java 8 instalado y asegurarse de que `AXMLPrinter2.jar` esté en la ruta correcta. El job de limpieza automática está configurado para ejecutarse mensualmente según la configuración del sistema.
 
 ---
 
