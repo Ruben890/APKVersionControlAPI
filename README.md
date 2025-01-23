@@ -145,7 +145,6 @@ La API incluye un job programado que se ejecuta periódicamente para eliminar ar
 2. **Criterios de Eliminación**: Elimina archivos APK cuya fecha de creación sea mayor a dos meses.
 3. **Registro de Actividades**: El job registra las operaciones de eliminación en los logs del sistema para su seguimiento.
 
-```
 
 ## Ejemplo de Respuesta JSON
 
