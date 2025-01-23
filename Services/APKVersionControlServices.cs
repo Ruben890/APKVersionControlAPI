@@ -84,6 +84,41 @@ namespace APKVersionControlAPI.Services
         public async Task<IEnumerable<ApkFileDto>> GetApkFiles(GenericParameters parameters) =>
             await _apkProcessor.GetAllApkAsync(parameters);
 
+        public string FindFileForDownload(GenericParameters parameters)
+        {
+            // Validar que IsDownload sea true
+            if (!parameters.IsDownload.HasValue || !parameters.IsDownload.Value)
+            {
+                throw new ArgumentException("IsDownload must be true to proceed with the download.");
+            }
+
+            // Validar que Name y Version no sean nulos o vacíos
+            if (string.IsNullOrEmpty(parameters.Name) || string.IsNullOrEmpty(parameters.Version))
+            {
+                throw new ArgumentException("Name and Version must be provided.");
+            }
+
+            var directoryPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "Files");
+
+            if (!Directory.Exists(directoryPath))
+            {
+                throw new DirectoryNotFoundException($"The directory {directoryPath} does not exist.");
+            }
+
+            // Construir el patrón de búsqueda
+            string searchPattern = $"{parameters.Name}-{parameters.Version}--*.apk";
+
+            // Buscar archivos que coincidan con el patrón
+            var files = Directory.GetFiles(directoryPath, searchPattern, SearchOption.AllDirectories);
+
+            if (files.Length == 0)
+            {
+                throw new FileNotFoundException($"No file found with name {parameters.Name} and version {parameters.Version}.");
+            }
+
+            // Devolver la ruta del primer archivo encontrado
+            return files.FirstOrDefault()!;
+        }
 
     }
 }
