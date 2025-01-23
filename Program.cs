@@ -27,7 +27,6 @@ builder.Services.AddOpenApi();
 builder.Services.ConfigureCords(builder.Configuration);
 builder.Services.ConfigureNewtonsoftJsonForControllers();
 
-
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.

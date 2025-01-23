@@ -1,4 +1,5 @@
-﻿# Documentación de la API de Gestión de Archivos APK
+﻿
+# Documentación de la API de Gestión de Archivos APK
 
 ![Screenshot 1](./api_image.png)
 
@@ -60,6 +61,38 @@ El proyecto tiene la siguiente estructura de carpetas:
 │
 ├── appsettings.json
 └── README.md
+```
+
+## Creación de la Carpeta `wwwroot`
+
+La carpeta `wwwroot` es un directorio esencial en el proyecto, ya que es donde se almacenan los archivos APK que se suben a través de la API.
+
+### ¿Por qué es necesaria la carpeta `wwwroot`?
+
+- **Almacenamiento de Archivos**: La carpeta `wwwroot` actúa como el directorio raíz para el almacenamiento de archivos estáticos, como los archivos APK. Dentro de esta carpeta, se crea una subcarpeta llamada `Files` donde se guardan los archivos APK.
+  
+- **Organización de Archivos**: Si un archivo APK está asociado a un cliente específico, se crea una subcarpeta dentro de `Files` con el nombre del cliente en minúsculas. Esto permite una organización clara y jerárquica de los archivos.
+
+### Creación Automática de la Carpeta `wwwroot`
+
+La API está diseñada para crear automáticamente la carpeta `wwwroot` y su subcarpeta `Files` al iniciarse por primera vez. Esto se hace mediante un código que verifica la existencia de la carpeta y la crea si no existe. Asegúrate de que la aplicación tenga permisos de escritura en el directorio donde se ejecuta para que este proceso funcione correctamente.
+
+Si la carpeta no se crea automáticamente, puedes crearla manualmente siguiendo estos pasos:
+
+1. Navega a la raíz del proyecto.
+2. Crea una carpeta llamada `wwwroot`.
+3. Dentro de `wwwroot`, crea una subcarpeta llamada `Files`.
+
+La estructura final debería verse así:
+
+```
+/proyecto
+│
+├── /wwwroot
+│   └── /Files
+│       └── (Archivos APK almacenados)
+│
+└── ...
 ```
 
 ## Funcionalidades Principales
@@ -145,7 +178,6 @@ La API incluye un job programado que se ejecuta periódicamente para eliminar ar
 2. **Criterios de Eliminación**: Elimina archivos APK cuya fecha de creación sea mayor a dos meses.
 3. **Registro de Actividades**: El job registra las operaciones de eliminación en los logs del sistema para su seguimiento.
 
-
 ## Ejemplo de Respuesta JSON
 
 ```json
@@ -165,4 +197,5 @@ La API incluye un job programado que se ejecuta periódicamente para eliminar ar
 No se requiere configuración adicional más allá de tener Java 8 instalado y asegurarse de que `AXMLPrinter2.jar` esté en la ruta correcta. El job de limpieza automática está configurado para ejecutarse periódicamente según la configuración del sistema.
 
 ---
-Esta documentación ahora incluye los detalles específicos sobre cómo descargar y eliminar archivos APK utilizando los parámetros `name`, `version`, `client`, y `isDownload`. También se explica cómo realizar búsquedas utilizando estos parámetros.
+
+Esta documentación ahora incluye los detalles específicos sobre cómo descargar y eliminar archivos APK utilizando los parámetros `name`, `version`, `client`, y `isDownload`. También se explica cómo realizar búsquedas utilizando estos parámetros y la importancia de la carpeta `wwwroot` en el funcionamiento de la API.
