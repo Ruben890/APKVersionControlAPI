@@ -2,6 +2,7 @@
 using APKVersionControlAPI.Interfaces.IServices;
 using APKVersionControlAPI.Shared;
 using APKVersionControlAPI.Shared.Dto;
+using APKVersionControlAPI.Shared.QueryParameters;
 using Microsoft.AspNetCore.Http;
 using System;
 using System.IO;
@@ -76,6 +77,19 @@ namespace APKVersionControlAPI.Services
             }
         }
 
+
+        public IEnumerable<ApkFileDto> GetApkFiles(GenericParameters parameters)
+        {
+            try
+            {
+                return _apkProcessor.GetAllApk(parameters);
+            }
+            catch (Exception)
+            {
+
+                throw;
+            }
+        }
 
     }
 }

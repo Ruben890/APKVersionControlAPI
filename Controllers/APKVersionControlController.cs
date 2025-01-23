@@ -1,9 +1,7 @@
 using APKVersionControlAPI.Interfaces.IServices;
 using APKVersionControlAPI.Shared;
-using APKVersionControlAPI.Shared.Dto;
 using APKVersionControlAPI.Shared.QueryParameters;
 using Microsoft.AspNetCore.Mvc;
-using System.Reflection.Metadata;
 
 namespace APKVersionControlAPI.Controllers
 {
@@ -18,7 +16,7 @@ namespace APKVersionControlAPI.Controllers
         }
 
 
-        [HttpPost("upload-apk")]
+        [HttpPost("UploadApkFile")]
         public IActionResult UploadApkFile(IFormFile File)
         {
             var response = new BaseResponse();
@@ -35,7 +33,21 @@ namespace APKVersionControlAPI.Controllers
         }
 
 
-
+        [HttpGet("GetAllApk")]
+        public IActionResult GetAllApk([FromQuery] GenericParameters parameters)
+        {
+            var response = new BaseResponse();
+            try
+            {
+                response.Details = _aPKVersionControl.GetApkFiles(parameters);
+                return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                response.Messeges = ex.Message;
+                return BadRequest(response);
+            }
+        }
 
     }
 }
