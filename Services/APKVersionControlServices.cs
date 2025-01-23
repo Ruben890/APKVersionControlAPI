@@ -19,7 +19,7 @@ namespace APKVersionControlAPI.Services
             _apkProcessor = processor;
         }
 
-        public async Task<string?> UploadApkFile(IFormFile file)
+        public async Task<string?> UploadApkFile(IFormFile file, string client)
         {
             try
             {
@@ -35,20 +35,30 @@ namespace APKVersionControlAPI.Services
                     throw new ArgumentException("The file is not a valid APK.");
                 }
 
-                // Ruta para guardar el archivo dentro de wwwroot/Files
-                string folderPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "Files");
+                // Ruta base para guardar el archivo dentro de wwwroot/Files
+                string baseFolderPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "Files");
 
-                // Crea la carpeta 'Files' si no existe
-                if (!Directory.Exists(folderPath))
+                // Crea la carpeta base 'Files' si no existe
+                if (!Directory.Exists(baseFolderPath))
                 {
-                    Directory.CreateDirectory(folderPath);
+                    Directory.CreateDirectory(baseFolderPath);
                 }
 
-                // Extrae información del archivo APK (usando un servicio personalizado/apkProcessor)
-                ApkFileDto? apkInfo = null;
+                // Si el cliente no es nulo o vacío, crear una subcarpeta para el cliente
+                string folderPath = baseFolderPath;
+                if (!string.IsNullOrWhiteSpace(client))
+                {
+                    folderPath = Path.Combine(baseFolderPath, client.ToLower()); // Convertir a minúsculas
+                    if (!Directory.Exists(folderPath))
+                    {
+                        Directory.CreateDirectory(folderPath);
+                    }
+                }
+
+                // Extrae información del archivo APK
+                ApkFileDto? apkInfo;
                 using (var stream = file.OpenReadStream())
                 {
-                    // Método personalizado para extraer información del APK
                     apkInfo = await _apkProcessor.ExtractApkInfoAsync(null, stream);
                 }
 
@@ -57,30 +67,29 @@ namespace APKVersionControlAPI.Services
                     throw new ArgumentException("Could not extract information from the APK.");
                 }
 
-                // Nombre del archivo sanitizado
-                string sanitizedFileName = Path.GetFileNameWithoutExtension(file.FileName)
-                    .Replace(" ", "_")
-                    .Replace(".", "_")
-                    .ToLower();
+                // Sanitiza el nombre del archivo
+                string sanitizedFileName = SanitizeFileName(Path.GetFileNameWithoutExtension(file.FileName));
 
                 // Nombre del archivo con versión y fecha
-                string fileName = $"{sanitizedFileName}-{apkInfo.Version}--{apkInfo.CreatedAt?.ToString("yyyyMMdd")}.apk";
+                string fileName = $"{sanitizedFileName}-{apkInfo.Version}--{apkInfo.CreatedAt:yyyyMMdd}.apk";
                 string filePath = Path.Combine(folderPath, fileName);
 
-                // Guarda el archivo en la carpeta 'Files'
+                // Guarda el archivo en la carpeta correspondiente
                 await using (var stream = new FileStream(filePath, FileMode.Create))
                 {
                     await file.CopyToAsync(stream);
                 }
 
-                return "APK file received, compressed, and saved successfully.";
+                return "APK file received, processed, and saved successfully.";
             }
             catch (Exception ex)
             {
-                throw;
+                // Registrar el error y lanzar una excepción personalizada
+                throw new ApplicationException("An error occurred while uploading the APK file.", ex);
             }
         }
 
+        
         public async Task<IEnumerable<ApkFileDto>> GetApkFiles(GenericParameters parameters) =>
             await _apkProcessor.GetAllApkAsync(parameters);
 
@@ -98,18 +107,26 @@ namespace APKVersionControlAPI.Services
                 throw new ArgumentException("Name and Version must be provided.");
             }
 
-            var directoryPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "Files");
+            // Determinar el directorio base
+            string baseDirectory = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "Files");
 
-            if (!Directory.Exists(directoryPath))
+            // Si el cliente no es nulo o vacío, agregarlo al path
+            if (!string.IsNullOrWhiteSpace(parameters.Client))
             {
-                throw new DirectoryNotFoundException($"The directory {directoryPath} does not exist.");
+                baseDirectory = Path.Combine(baseDirectory, parameters.Client);
+            }
+
+            // Verificar si el directorio existe
+            if (!Directory.Exists(baseDirectory))
+            {
+                throw new DirectoryNotFoundException($"The directory {baseDirectory} does not exist.");
             }
 
             // Construir el patrón de búsqueda
             string searchPattern = $"{parameters.Name}-{parameters.Version}--*.apk";
 
             // Buscar archivos que coincidan con el patrón
-            var files = Directory.GetFiles(directoryPath, searchPattern, SearchOption.AllDirectories);
+            var files = Directory.GetFiles(baseDirectory, searchPattern, SearchOption.TopDirectoryOnly);
 
             if (files.Length == 0)
             {
@@ -117,8 +134,30 @@ namespace APKVersionControlAPI.Services
             }
 
             // Devolver la ruta del primer archivo encontrado
-            return files.FirstOrDefault()!;
+            return files.First();
         }
 
+
+        /// <summary>
+        /// Sanitiza el nombre del archivo para eliminar caracteres no válidos.
+        /// </summary>
+        private static string SanitizeFileName(string fileName)
+        {
+            if (string.IsNullOrWhiteSpace(fileName))
+            {
+                throw new ArgumentException("File name cannot be null or empty.");
+            }
+
+            // Reemplaza caracteres no válidos
+            var invalidChars = Path.GetInvalidFileNameChars();
+            var sanitized = new string(fileName
+                .Replace(" ", "_")
+                .Replace(".", "_")
+                .ToLower()
+                .Where(c => !invalidChars.Contains(c))
+                .ToArray());
+
+            return sanitized;
+        }
     }
 }

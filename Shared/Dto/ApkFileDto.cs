@@ -11,5 +11,6 @@ namespace APKVersionControlAPI.Shared.Dto
         public DateTime? CreatedAt { get; set; }
         public bool? IsCurrentVersion { get; set; } = false!;
         public bool? IsPreviousVersion { get; set; } = false!;
+        public string? Client { get; set; } = null!;
     }
 }

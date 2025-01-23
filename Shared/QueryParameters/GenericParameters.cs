@@ -5,5 +5,12 @@
         public bool? IsDownload { get; set; } = false;
         public string? Version { get; set; } = null!;
         public string? Name { get; set; } = null!;
+
+        private string? _client = null!;
+        public string? Client
+        {
+            get => _client;
+            set => _client = value?.ToLower();
+        }
     }
 }

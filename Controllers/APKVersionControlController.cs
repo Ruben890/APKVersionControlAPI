@@ -17,12 +17,12 @@ namespace APKVersionControlAPI.Controllers
 
 
         [HttpPost("UploadApkFile")]
-        public IActionResult UploadApkFile(IFormFile File)
+        public IActionResult UploadApkFile(IFormFile File, [FromQuery] string Client)
         {
             var response = new BaseResponse();
             try
             {
-                response.Messages = _aPKVersionControl.UploadApkFile(File).Result!;
+                response.Messages = _aPKVersionControl.UploadApkFile(File, Client.ToLower()).Result!;
                 return Ok(response);
             }
             catch (Exception ex)

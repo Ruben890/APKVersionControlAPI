@@ -13,15 +13,20 @@ namespace APKVersionControlAPI.Infrastructure.Repository
     {
         public async Task<List<ApkFileDto>> GetAllApkAsync(GenericParameters parameters)
         {
-            var directoryPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "Files");
+            var baseFolderPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "Files");
 
-            if (!Directory.Exists(directoryPath))
+            if (!Directory.Exists(baseFolderPath))
             {
-                throw new DirectoryNotFoundException($"The directory {directoryPath} does not exist.");
+                throw new DirectoryNotFoundException($"The directory {baseFolderPath} does not exist.");
+            }
+
+            if (!string.IsNullOrWhiteSpace(parameters.Client))
+            {
+                baseFolderPath = Path.Combine(baseFolderPath, parameters.Client);
             }
 
             // Obtener todos los archivos APK en el directorio sin cargar todos a memoria
-            var apkFilePaths = Directory.EnumerateFiles(directoryPath, "*.apk");
+            var apkFilePaths = Directory.EnumerateFiles(baseFolderPath, "*.apk");
 
             var apkFiles = await ProcessApkFilesAsync(apkFilePaths);
 
@@ -59,14 +64,26 @@ namespace APKVersionControlAPI.Infrastructure.Repository
         public async Task<ApkFileDto> ExtractApkInfoAsync(string? apkFilePath, Stream? apkFileStream = null)
         {
             if (apkFilePath == null && apkFileStream == null)
+            {
                 throw new ArgumentException("You must provide a file path or data stream.");
+            }
 
             if (apkFileStream != null && !apkFileStream.CanRead)
+            {
                 throw new ArgumentException("The data stream is invalid.", nameof(apkFileStream));
+            }
+
+            // Obtener el nombre de la carpeta
+            string? folderName = null;
+            if (!string.IsNullOrWhiteSpace(apkFilePath))
+            {
+                folderName = Path.GetFileName(Path.GetDirectoryName(apkFilePath));
+            }
 
             var apkFileDto = new ApkFileDto
             {
-                Name = apkFilePath != null ? (Path.GetFileNameWithoutExtension(apkFilePath).Split('-')[0]) : "ArchivoDesconocido",
+                Name = apkFilePath != null ? Path.GetFileNameWithoutExtension(apkFilePath).Split('-')[0] : "ArchivoDesconocido",
+                Client = string.Equals(folderName, "Files", StringComparison.OrdinalIgnoreCase) ? null : folderName,
                 Size = apkFilePath != null
                     ? Math.Round(new FileInfo(apkFilePath).Length / (1024.0 * 1024.0), 2)
                     : Math.Round(apkFileStream!.Length / (1024.0 * 1024.0), 2),
@@ -89,7 +106,7 @@ namespace APKVersionControlAPI.Infrastructure.Repository
                 else if (apkFileStream != null)
                 {
                     // Guardar el stream en un archivo temporal
-                    using (var fileStream = new FileStream(tempApkPath, FileMode.Create, FileAccess.Write))
+                    await using (var fileStream = new FileStream(tempApkPath, FileMode.Create, FileAccess.Write))
                     {
                         await apkFileStream.CopyToAsync(fileStream);
                     }
