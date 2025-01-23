@@ -1,4 +1,5 @@
-﻿using APKVersionControlAPI.Interfaces;
+﻿using APKVersionControlAPI.Infrastructure.Jobs;
+using APKVersionControlAPI.Interfaces;
 using Hangfire;
 
 namespace HealthCenterAPI.Extencion
@@ -9,7 +10,7 @@ namespace HealthCenterAPI.Extencion
         public static void ConfigureBackgroundJobs(this IServiceCollection services)
         {
             // Registrar los trabajos que implementan IBackgroundJob
-
+            services.AddScoped<IBackgroundJob, ApkFilesJobs>();
             services.AddSingleton<IHostedService, BackgroundJobService>();
         }
 

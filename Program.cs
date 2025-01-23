@@ -1,26 +1,20 @@
-﻿using APKVersionControlAPI.Infrastructure.Repository;
+﻿using APKVersionControlAPI.Extencions;
+using APKVersionControlAPI.Infrastructure.Repository;
 using APKVersionControlAPI.Interfaces.IRepository;
 using APKVersionControlAPI.Interfaces.IServices;
 using APKVersionControlAPI.Services;
 using Hangfire;
 using Hangfire.MemoryStorage;
 using HealthCenterAPI.Extencion;
-using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Server.Kestrel.Core;
-using Microsoft.Extensions.FileProviders;
 using Newtonsoft.Json.Serialization;
 using Scalar.AspNetCore;
-using System.Runtime.InteropServices;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Configuración de Kestrel para aceptar archivos grandes
-builder.Services.Configure<KestrelServerOptions>(options =>
-{
-    options.Limits.MaxRequestBodySize = 2L * 1024 * 1024 * 1024; // 2 GB
-});
 
+builder.Services.ConfigureMaxRequestBodySize(2L * 1024 * 1024 * 1024); // 2 GB
 builder.Services.AddControllers();
 builder.Services.AddOpenApi();
 builder.Services.Configure<IISOptions>(options => { });
@@ -30,24 +24,8 @@ builder.Services.AddScoped<IApkProcessor, ApkProcessor>();
 builder.Services.ConfigureBackgroundJobs();
 builder.Services.AddHangfireServer();
 builder.Services.AddOpenApi();
-
-builder.Services.AddCors(options =>
-{
-    options.AddPolicy("AllowAll", builder =>
-    {
-        builder.AllowAnyOrigin()   // Acepta cualquier origen
-               .AllowAnyHeader()
-               .AllowAnyMethod();
-    });
-});
-
-builder.Services.AddControllers()
-    .AddNewtonsoftJson(options =>
-    {
-        options.SerializerSettings.ContractResolver = new DefaultContractResolver();
-        options.SerializerSettings.ReferenceLoopHandling = Newtonsoft.Json.ReferenceLoopHandling.Ignore;
-        options.SerializerSettings.NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore;
-    });
+builder.Services.ConfigureCords(builder.Configuration);
+builder.Services.ConfigureNewtonsoftJsonForControllers();
 
 
 var app = builder.Build();
@@ -93,7 +71,7 @@ if (app.Environment.IsDevelopment())
     app.UseHangfireDashboard();
 }
 
-app.UseCors("AllowAll");
+app.UseCors("CorsPolicy");
 app.UseRouting();
 app.MapControllers();
 app.Run();

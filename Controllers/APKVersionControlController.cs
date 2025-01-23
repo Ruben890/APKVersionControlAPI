@@ -3,7 +3,7 @@ using APKVersionControlAPI.Shared;
 using APKVersionControlAPI.Shared.QueryParameters;
 using Microsoft.AspNetCore.Mvc;
 
-namespace APKVersionControlAPI.Presentation.Controllers
+namespace APKVersionControlAPI.Controllers
 {
     [Route("api/APKVersionControl")]
     [ApiController]
