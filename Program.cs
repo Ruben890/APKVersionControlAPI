@@ -30,7 +30,7 @@ builder.Services.AddScoped<IApkProcessor, ApkProcessor>();
 builder.Services.ConfigureBackgroundJobs();
 builder.Services.AddHangfireServer();
 builder.Services.AddOpenApi();
-
+builder.Services.AddMemoryCache();
 
 builder.Services.AddCors(options =>
 {
