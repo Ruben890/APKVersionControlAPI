@@ -3,7 +3,6 @@ using APKVersionControlAPI.Interfaces.IServices;
 using APKVersionControlAPI.Shared;
 using APKVersionControlAPI.Shared.Dto;
 using APKVersionControlAPI.Shared.QueryParameters;
-using APKVersionControlAPI.Ultils;
 using Microsoft.AspNetCore.Http;
 using System;
 using System.IO;
@@ -72,23 +71,6 @@ namespace APKVersionControlAPI.Services
                 await using (var stream = new FileStream(filePath, FileMode.Create))
                 {
                     await file.CopyToAsync(stream);
-                }
-
-                // Comprime el archivo APK a un archivo ZIP
-                string zipFileName = Path.ChangeExtension(fileName, ".zip");
-                string zipFilePath = Path.Combine(folderPath, zipFileName);
-
-                // Comprime el archivo de manera asíncrona
-                await Task.Run(() => FileCompressor.CompressFile(filePath, zipFilePath));
-
-                // Elimina el archivo APK original solo si la compresión fue exitosa
-                if (File.Exists(zipFilePath))
-                {
-                    File.Delete(filePath);
-                }
-                else
-                {
-                    throw new InvalidOperationException("Failed to compress the APK file.");
                 }
 
                 return "APK file received, compressed, and saved successfully.";

@@ -1,7 +1,7 @@
 ﻿using APKVersionControlAPI.Interfaces.IRepository;
 using APKVersionControlAPI.Shared.Dto;
 using APKVersionControlAPI.Shared.QueryParameters;
-using APKVersionControlAPI.Ultils;
+using APKVersionControlAPI.Shared.Utils;
 using System.Diagnostics;
 using System.Text.RegularExpressions;
 using System.Xml;
@@ -21,7 +21,7 @@ namespace APKVersionControlAPI.Infrastructure.Repository
             }
 
             // Obtener todos los archivos APK en el directorio sin cargar todos a memoria
-            var apkFilePaths = Directory.EnumerateFiles(directoryPath, "*.zip");
+            var apkFilePaths = Directory.EnumerateFiles(directoryPath, "*.apk");
 
             var apkFiles = await ProcessApkFilesAsync(apkFilePaths);
 
@@ -79,27 +79,33 @@ namespace APKVersionControlAPI.Infrastructure.Repository
 
             try
             {
+                string tempApkPath = Path.Combine(tempPath, "temp.apk");
+
                 if (apkFilePath != null)
                 {
-                    await Task.Run(() => FileCompressor.DecompressFile(apkFilePath, tempPath));
+                    // Copiar el archivo APK al directorio temporal
+                    File.Copy(apkFilePath, tempApkPath, true);
                 }
                 else if (apkFileStream != null)
                 {
-                    string tempApkPath = Path.Combine(tempPath, "temp.apk");
+                    // Guardar el stream en un archivo temporal
                     using (var fileStream = new FileStream(tempApkPath, FileMode.Create, FileAccess.Write))
                     {
                         await apkFileStream.CopyToAsync(fileStream);
                     }
-                    await Task.Run(() => FileCompressor.DecompressFile(tempApkPath, tempPath));
                 }
 
+                // Descomprimir el archivo APK
+                await Task.Run(() => APKExtractor.ExtractAPK(tempApkPath, tempPath));
+
+                // Buscar el archivo AndroidManifest.xml en el directorio descomprimido
                 string manifestPath = Path.Combine(tempPath, "AndroidManifest.xml");
 
                 if (File.Exists(manifestPath))
                 {
                     // Validar si Java 8 o superior está instalado
                     var javaVersion = await GetJavaVersionAsync();
-                    if (javaVersion == null || !javaVersion.StartsWith("1.8") && !int.TryParse(javaVersion.Split('.')[0], out var major) && major < 8)
+                    if (javaVersion == null || (!javaVersion.StartsWith("1.8") && !int.TryParse(javaVersion.Split('.')[0], out var major) && major < 8))
                     {
                         throw new InvalidOperationException("Java 8 or higher is not installed.");
                     }
@@ -108,7 +114,7 @@ namespace APKVersionControlAPI.Infrastructure.Repository
                     string decodedManifestPath = Path.Combine(tempPath, "ManifestDecode.xml");
 
                     // Ruta del archivo JAR en el directorio raíz del proyecto
-                    string jarPath = Path.Combine(Directory.GetCurrentDirectory(), "Lib", "AXMLPrinter2.jar");
+                    string jarPath = Path.Combine(Directory.GetCurrentDirectory(), "Shared", "Lib", "AXMLPrinter2.jar");
 
                     string command = $"java -jar \"{jarPath}\" \"{manifestPath}\" > \"{decodedManifestPath}\"";
                     await ExecuteCommandAsync(command);
