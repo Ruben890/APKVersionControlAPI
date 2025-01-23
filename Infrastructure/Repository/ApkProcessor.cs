@@ -90,7 +90,7 @@ namespace APKVersionControlAPI.Infrastructure.Repository
 
             var apkFileDto = new ApkFileDto
             {
-                Name = apkFilePath != null ? Path.GetFileNameWithoutExtension(apkFilePath) : "ArchivoDesconocido",
+                Name = apkFilePath != null ? Path.GetFileNameWithoutExtension(apkFilePath).Split('-')[0] : "ArchivoDesconocido",
                 Size = apkFilePath != null
                     ? Math.Round(new FileInfo(apkFilePath).Length / (1024.0 * 1024.0), 2)
                     : Math.Round(apkFileStream!.Length / (1024.0 * 1024.0), 2),
