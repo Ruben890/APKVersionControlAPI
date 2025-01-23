@@ -18,7 +18,6 @@
 	<ItemGroup>
 		<Folder Include="Infrastructure\Jobs\" />
 		<Folder Include="wwwroot\" />
-		<Folder Include="wwwroot\Files\" />
 	</ItemGroup>
 
 	
