@@ -7,6 +7,7 @@ using Hangfire.MemoryStorage;
 using HealthCenterAPI.Extencion;
 using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.HttpOverrides;
+using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Microsoft.Extensions.FileProviders;
 using Newtonsoft.Json.Serialization;
 using Scalar.AspNetCore;
@@ -14,6 +15,11 @@ using System.Runtime.InteropServices;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Configuración de Kestrel para aceptar archivos grandes
+builder.Services.Configure<KestrelServerOptions>(options =>
+{
+    options.Limits.MaxRequestBodySize = 2L * 1024 * 1024 * 1024; // 2 GB
+});
 
 builder.Services.AddControllers();
 builder.Services.AddOpenApi();
