@@ -6,6 +6,7 @@ using APKVersionControlAPI.Shared.QueryParameters;
 using Microsoft.AspNetCore.Http;
 using System;
 using System.IO;
+using System.IO.Compression;
 using System.Threading.Tasks;
 
 namespace APKVersionControlAPI.Services
@@ -68,7 +69,19 @@ namespace APKVersionControlAPI.Services
                     await file.CopyToAsync(stream);
                 }
 
-                return "APK file received and saved successfully.";
+                // Compress the APK file to a ZIP file
+                string zipFileName = Path.ChangeExtension(fileName, ".zip");
+                string zipFilePath = Path.Combine(folderPath, zipFileName);
+
+                using (var zipArchive = ZipFile.Open(zipFilePath, ZipArchiveMode.Create))
+                {
+                    zipArchive.CreateEntryFromFile(filePath, fileName);
+                }
+
+                // Optionally, delete the original APK file after compression
+                File.Delete(filePath);
+
+                return "APK file received, compressed, and saved successfully.";
             }
             catch (Exception ex)
             {
@@ -76,7 +89,6 @@ namespace APKVersionControlAPI.Services
                 return $"Error: {ex.Message}";
             }
         }
-
 
         public async Task<IEnumerable<ApkFileDto>> GetApkFiles(GenericParameters parameters) =>
             await _apkProcessor.GetAllApkAsync(parameters);

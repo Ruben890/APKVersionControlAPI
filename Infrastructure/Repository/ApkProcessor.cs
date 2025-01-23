@@ -23,7 +23,7 @@ namespace APKVersionControlAPI.Infrastructure.Repository
             }
 
             // Obtener todos los archivos APK en el directorio sin cargar todos a memoria
-            var apkFilePaths = Directory.EnumerateFiles(directoryPath, "*.apk");
+            var apkFilePaths = Directory.EnumerateFiles(directoryPath, "*.zip");
 
             var apkFiles = await ProcessApkFilesAsync(apkFilePaths);
 

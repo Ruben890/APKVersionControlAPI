@@ -28,6 +28,7 @@ bld/
 
 # Ignorar archivos con extensión .apk
 *.apk
+*.zip
 
 /Files/
 # Visual Studio 2015 cache/options directory
