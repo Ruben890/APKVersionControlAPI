@@ -9,7 +9,7 @@ Esta API está diseñada para manejar y administrar archivos APK, permitiendo a 
 
 Para que la API funcione correctamente, es necesario tener instalado:
 
-- **Java **: Asegúrate de tener Java 8 o una version superior instalada en tu sistema. Puedes verificar la versión de Java ejecutando el siguiente comando en tu terminal:
+- **Java**: Asegúrate de tener Java 8 o una version superior instalada en tu sistema. Puedes verificar la versión de Java ejecutando el siguiente comando en tu terminal:
   ```bash
   java -version
   ```
