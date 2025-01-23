@@ -95,8 +95,7 @@ namespace APKVersionControlAPI.Services
             }
             catch (Exception ex)
             {
-                // Maneja cualquier error y proporciona más detalles
-                return $"Error: {ex.Message}. StackTrace: {ex.StackTrace}";
+                throw;
             }
         }
 
