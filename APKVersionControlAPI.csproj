@@ -17,6 +17,14 @@
 
 	<ItemGroup>
 		<Folder Include="Infrastructure\Jobs\" />
+		<Folder Include="wwwroot\" />
+	</ItemGroup>
+
+	
+	
+	
+	<ItemGroup>
+		<None Include="Infrastructure\Repository\ApkProcessor.cs" />
 	</ItemGroup>
 
 	<ItemGroup>
@@ -25,17 +33,6 @@
 			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 			<LinkBase>wwwroot</LinkBase>
 		</Content>
-	</ItemGroup>
-
-	<ItemGroup>
-	  <Compile Remove="wwwroot\Files\**" />
-	  <Content Remove="wwwroot\Files\**" />
-	  <EmbeddedResource Remove="wwwroot\Files\**" />
-	  <None Remove="wwwroot\Files\**" />
-	</ItemGroup>
-
-	<ItemGroup>
-		<None Include="Infrastructure\Repository\ApkProcessor.cs" />
 	</ItemGroup>
 
 	<ItemGroup>

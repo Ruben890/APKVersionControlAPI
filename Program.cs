@@ -70,42 +70,6 @@ if (app.Environment.IsProduction())
     app.UseHttpsRedirection();
 }
 
-// Configuración de archivos estáticos basada en el sistema operativo
-if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX) || RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
-{
-    string webRootPath = Path.Combine(Path.GetDirectoryName(System.Reflection.Assembly.GetEntryAssembly()!.Location)!, "wwwroot");
-
-    if (!Directory.Exists(webRootPath))
-    {
-        Directory.CreateDirectory(webRootPath);
-    }
-
-    app.UseStaticFiles(new StaticFileOptions
-    {
-        FileProvider = new PhysicalFileProvider(Path.Combine(Directory.GetCurrentDirectory(), "wwwroot")),
-        //RequestPath = "/static",
-        OnPrepareResponse = ctx =>
-        {
-            // Configuración de caché para archivos estáticos
-            const int durationInSeconds = 60 * 60 * 24 * 7; // 7 días
-            ctx.Context.Response.Headers.Append("Cache-Control", $"public, max-age={durationInSeconds}");
-
-            // Bloquear acceso a la carpeta Files
-            if (ctx.File.PhysicalPath!.Contains(Path.Combine("wwwroot", "Files")))
-            {
-                ctx.Context.Response.StatusCode = StatusCodes.Status403Forbidden;
-                ctx.Context.Response.ContentLength = 0;
-                ctx.Context.Response.Body = Stream.Null;
-            }
-        }
-    });
-
-}
-else if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-{
-    app.UseStaticFiles();
-}
-
 
 app.UseForwardedHeaders(new ForwardedHeadersOptions
 {
