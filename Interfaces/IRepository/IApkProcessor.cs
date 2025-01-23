@@ -5,7 +5,7 @@ namespace APKVersionControlAPI.Interfaces.IRepository
 {
     public interface IApkProcessor
     {
-        ApkFileDto ExtractApkInfo(string? apkFilePath, Stream? apkFileStream = null);
-        List<ApkFileDto> GetAllApk(GenericParameters parameters);
+        Task<ApkFileDto> ExtractApkInfoAsync(string? apkFilePath, Stream? apkFileStream = null);
+        Task<List<ApkFileDto>> GetAllApkAsync(GenericParameters parameters);
     }
 }

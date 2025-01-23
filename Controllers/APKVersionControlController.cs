@@ -34,12 +34,12 @@ namespace APKVersionControlAPI.Controllers
 
 
         [HttpGet("GetAllApk")]
-        public IActionResult GetAllApk([FromQuery] GenericParameters parameters)
+        public async Task<IActionResult> GetAllApk([FromQuery] GenericParameters parameters)
         {
             var response = new BaseResponse();
             try
             {
-                response.Details = _aPKVersionControl.GetApkFiles(parameters);
+                response.Details = await _aPKVersionControl.GetApkFiles(parameters);
                 return Ok(response);
             }
             catch (Exception ex)

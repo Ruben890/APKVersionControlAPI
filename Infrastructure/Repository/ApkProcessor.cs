@@ -1,5 +1,4 @@
-﻿
-using APKVersionControlAPI.Interfaces.IRepository;
+﻿using APKVersionControlAPI.Interfaces.IRepository;
 using APKVersionControlAPI.Shared.Dto;
 using APKVersionControlAPI.Shared.QueryParameters;
 using Newtonsoft.Json.Linq;
@@ -14,8 +13,7 @@ namespace APKVersionControlAPI.Infrastructure.Repository
 {
     public class ApkProcessor : IApkProcessor
     {
-
-        public List<ApkFileDto> GetAllApk(GenericParameters parameters)
+        public async Task<List<ApkFileDto>> GetAllApkAsync(GenericParameters parameters)
         {
             var directoryPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "Files");
 
@@ -27,7 +25,7 @@ namespace APKVersionControlAPI.Infrastructure.Repository
             // Obtener todos los archivos APK en el directorio sin cargar todos a memoria
             var apkFilePaths = Directory.EnumerateFiles(directoryPath, "*.apk");
 
-            var apkFiles = ProcessApkFiles(apkFilePaths);
+            var apkFiles = await ProcessApkFilesAsync(apkFilePaths);
 
             // Filtrar por versión solo si se ha proporcionado
             if (!string.IsNullOrWhiteSpace(parameters.Version))
@@ -59,7 +57,8 @@ namespace APKVersionControlAPI.Infrastructure.Repository
 
             return sortedApkFiles;
         }
-        public ApkFileDto ExtractApkInfo(string? apkFilePath, Stream? apkFileStream = null)
+
+        public async Task<ApkFileDto> ExtractApkInfoAsync(string? apkFilePath, Stream? apkFileStream = null)
         {
             if (apkFilePath == null && apkFileStream == null)
                 throw new ArgumentException("You must provide a file path or data stream.");
@@ -84,16 +83,16 @@ namespace APKVersionControlAPI.Infrastructure.Repository
             {
                 if (apkFilePath != null)
                 {
-                    ZipFile.ExtractToDirectory(apkFilePath, tempPath);
+                    await Task.Run(() => ZipFile.ExtractToDirectory(apkFilePath, tempPath));
                 }
                 else if (apkFileStream != null)
                 {
                     string tempApkPath = Path.Combine(tempPath, "temp.apk");
                     using (var fileStream = new FileStream(tempApkPath, FileMode.Create, FileAccess.Write))
                     {
-                        apkFileStream.CopyTo(fileStream);
+                        await apkFileStream.CopyToAsync(fileStream);
                     }
-                    ZipFile.ExtractToDirectory(tempApkPath, tempPath);
+                    await Task.Run(() => ZipFile.ExtractToDirectory(tempApkPath, tempPath));
                 }
 
                 string manifestPath = Path.Combine(tempPath, "AndroidManifest.xml");
@@ -101,7 +100,7 @@ namespace APKVersionControlAPI.Infrastructure.Repository
                 if (File.Exists(manifestPath))
                 {
                     // Validar si Java 8 o superior está instalado
-                    var javaVersion = GetJavaVersion();
+                    var javaVersion = await GetJavaVersionAsync();
                     if (javaVersion == null || !javaVersion.StartsWith("1.8") && !int.TryParse(javaVersion.Split('.')[0], out var major) && major < 8)
                     {
                         throw new InvalidOperationException("Java 8 or higher is not installed.");
@@ -114,7 +113,7 @@ namespace APKVersionControlAPI.Infrastructure.Repository
                     string jarPath = Path.Combine(Directory.GetCurrentDirectory(), "Lib", "AXMLPrinter2.jar");
 
                     string command = $"java -jar \"{jarPath}\" \"{manifestPath}\" > \"{decodedManifestPath}\"";
-                    ExecuteCommand(command);
+                    await ExecuteCommandAsync(command);
 
                     if (File.Exists(decodedManifestPath))
                     {
@@ -137,27 +136,32 @@ namespace APKVersionControlAPI.Infrastructure.Repository
 
             return apkFileDto;
         }
-        private List<ApkFileDto> ProcessApkFiles(IEnumerable<string> apkFilePaths)
+
+        private async Task<List<ApkFileDto>> ProcessApkFilesAsync(IEnumerable<string> apkFilePaths)
         {
             var apkFileDtos = new List<ApkFileDto>();
 
-            foreach (var apkFilePath in apkFilePaths)
+            await Parallel.ForEachAsync(apkFilePaths, async (apkFilePath, cancellationToken) =>
             {
                 try
                 {
-                    var apkInfo = ExtractApkInfo(apkFilePath);
-                    apkFileDtos.Add(apkInfo);
+                    var apkInfo = await ExtractApkInfoAsync(apkFilePath);
+                    lock (apkFileDtos)
+                    {
+                        apkFileDtos.Add(apkInfo);
+                    }
                 }
                 catch (Exception ex)
                 {
                     // Log de error o manejo adecuado en caso de que falte algún archivo o haya un problema
                     Console.WriteLine($"Error procesando {apkFilePath}: {ex.Message}");
                 }
-            }
+            });
 
             return apkFileDtos;
         }
-        private static string? GetJavaVersion()
+
+        private static async Task<string?> GetJavaVersionAsync()
         {
             try
             {
@@ -174,8 +178,8 @@ namespace APKVersionControlAPI.Infrastructure.Repository
                 };
 
                 process.Start();
-                string output = process.StandardError.ReadToEnd();
-                process.WaitForExit();
+                string output = await process.StandardError.ReadToEndAsync();
+                await process.WaitForExitAsync();
 
                 // Extraer la versión de Java
                 var match = Regex.Match(output, @"\d+\.\d+\.\d+");
@@ -186,7 +190,8 @@ namespace APKVersionControlAPI.Infrastructure.Repository
                 return null;
             }
         }
-        private static void ExecuteCommand(string command)
+
+        private static async Task ExecuteCommandAsync(string command)
         {
             bool isWindows = OperatingSystem.IsWindows();
             var process = new Process
@@ -203,14 +208,13 @@ namespace APKVersionControlAPI.Infrastructure.Repository
             };
 
             process.Start();
-            process.WaitForExit();
+            await process.WaitForExitAsync();
 
             if (process.ExitCode != 0)
             {
-                string error = process.StandardError.ReadToEnd();
+                string error = await process.StandardError.ReadToEndAsync();
                 throw new InvalidOperationException($"Error executing command: {error}");
             }
         }
-
     }
 }

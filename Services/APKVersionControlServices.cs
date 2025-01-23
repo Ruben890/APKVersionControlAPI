@@ -48,7 +48,7 @@ namespace APKVersionControlAPI.Services
                 using (var stream = file.OpenReadStream())
                 {
                     // Custom method to extract information from the APK
-                    apkInfo = _apkProcessor.ExtractApkInfo(null, stream);
+                    apkInfo = await _apkProcessor.ExtractApkInfoAsync(null, stream);
                 }
 
                 if (apkInfo == null)
@@ -78,18 +78,9 @@ namespace APKVersionControlAPI.Services
         }
 
 
-        public IEnumerable<ApkFileDto> GetApkFiles(GenericParameters parameters)
-        {
-            try
-            {
-                return _apkProcessor.GetAllApk(parameters);
-            }
-            catch (Exception)
-            {
+        public async Task<IEnumerable<ApkFileDto>> GetApkFiles(GenericParameters parameters) =>
+            await _apkProcessor.GetAllApkAsync(parameters);
 
-                throw;
-            }
-        }
 
     }
 }

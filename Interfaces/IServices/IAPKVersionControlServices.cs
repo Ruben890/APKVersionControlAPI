@@ -6,7 +6,7 @@ namespace APKVersionControlAPI.Interfaces.IServices
 {
     public interface IAPKVersionControlServices
     {
-        IEnumerable<ApkFileDto> GetApkFiles(GenericParameters parameters);
+        Task<IEnumerable<ApkFileDto>> GetApkFiles(GenericParameters parameters);
         Task<string?> UploadApkFile(IFormFile file);
     }
 }
