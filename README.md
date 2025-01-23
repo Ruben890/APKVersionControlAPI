@@ -1,8 +1,6 @@
-﻿Gracias por la aclaración. Aquí tienes la documentación actualizada con los detalles específicos sobre cómo descargar y eliminar archivos APK utilizando los parámetros que mencionaste (`name`, `version`, `client`, y `isDownload`). También se incluye cómo realizar búsquedas utilizando estos parámetros en el endpoint de obtención de información.
+﻿# Documentación de la API de Gestión de Archivos APK
 
----
-
-# Documentación de la API de Gestión de Archivos APK
+![Screenshot 1](./api_image.png)
 
 Esta API está diseñada para manejar y administrar archivos APK, permitiendo a los usuarios obtener información detallada sobre los archivos APK, como la versión, el nombre, y otros metadatos. La API utiliza Java 8 y la librería `AXMLPrinter2.jar` para extraer la información de los archivos APK y presentarla en formato JSON.
 
