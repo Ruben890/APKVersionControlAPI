@@ -24,7 +24,7 @@ namespace APKVersionControlAPI.Infrastructure.Jobs
             }
 
             // Obtener todos los archivos APK en el directorio sin cargar todos a memoria
-            var apkFilePaths = Directory.EnumerateFiles(baseFolderPath, "*.apk");
+            var apkFilePaths = Directory.EnumerateFiles(baseFolderPath, "*.apk", SearchOption.AllDirectories);
 
             // Fecha actual menos dos meses
             var twoMonthsAgo = DateTime.Now.AddMonths(-2);
