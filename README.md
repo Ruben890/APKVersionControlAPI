@@ -52,7 +52,7 @@ El proyecto tiene la siguiente estructura de carpetas:
 │   │   └── GenericParameters.cs
 │   └── /Utils
 │       ├── APKExtractor.cs
-│       └── BaseResponses.cs
+│   └── BaseResponses.cs
 │
 ├── /wwwroot
 │   └── /Files
