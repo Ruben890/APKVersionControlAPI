@@ -20,7 +20,7 @@ namespace APKVersionControlAPI.Infrastructure.Repository
 
             if (!Directory.Exists(directoryPath))
             {
-                throw new DirectoryNotFoundException($"El directorio {directoryPath} no existe.");
+                throw new DirectoryNotFoundException($"The directory {directoryPath} does not exist.");
             }
 
             // Obtener todos los archivos APK en el directorio sin cargar todos a memoria
@@ -37,7 +37,7 @@ namespace APKVersionControlAPI.Infrastructure.Repository
             // Filtrar por nombre solo si se ha proporcionado
             if (!string.IsNullOrWhiteSpace(parameters.Name))
             {
-                apkFiles = apkFiles.Where(x => x.Name!.Equals(parameters.Name, StringComparison.OrdinalIgnoreCase)).ToList();
+                apkFiles = apkFiles.Where(x => x.Name!.Contains(parameters.Name, StringComparison.OrdinalIgnoreCase)).ToList();
             }
 
             // Ordenar por versión y fecha de creación (descendente)
@@ -83,10 +83,10 @@ namespace APKVersionControlAPI.Infrastructure.Repository
         public ApkFileDto ExtractApkInfo(string? apkFilePath, Stream? apkFileStream = null)
         {
             if (apkFilePath == null && apkFileStream == null)
-                throw new ArgumentException("Debes proporcionar una ruta de archivo o un flujo de datos.");
+                throw new ArgumentException("You must provide a file path or data stream.");
 
             if (apkFileStream != null && !apkFileStream.CanRead)
-                throw new ArgumentException("El flujo de datos no es válido.", nameof(apkFileStream));
+                throw new ArgumentException("The data stream is invalid.", nameof(apkFileStream));
 
             var apkFileDto = new ApkFileDto
             {
@@ -125,15 +125,14 @@ namespace APKVersionControlAPI.Infrastructure.Repository
                     var javaVersion = GetJavaVersion();
                     if (javaVersion == null || !javaVersion.StartsWith("1.8") && !int.TryParse(javaVersion.Split('.')[0], out var major) && major < 8)
                     {
-                        throw new InvalidOperationException("Java 8 o superior no está instalado.");
+                        throw new InvalidOperationException("Java 8 or higher is not installed.");
                     }
 
                     // Generar archivo decodificado usando AXMLPrinter2.jar
                     string decodedManifestPath = Path.Combine(tempPath, "ManifestDecode.xml");
 
                     // Ruta del archivo JAR en el directorio raíz del proyecto
-                    string jarPath = Path.Combine(Directory.GetCurrentDirectory(), "AXMLPrinter2.jar");
-
+                    string jarPath = Path.Combine(Directory.GetCurrentDirectory(), "Lib", "AXMLPrinter2.jar");
 
                     string command = $"java -jar \"{jarPath}\" \"{manifestPath}\" > \"{decodedManifestPath}\"";
                     ExecuteCommand(command);
@@ -212,12 +211,9 @@ namespace APKVersionControlAPI.Infrastructure.Repository
             if (process.ExitCode != 0)
             {
                 string error = process.StandardError.ReadToEnd();
-                throw new InvalidOperationException($"Error ejecutando el comando: {error}");
+                throw new InvalidOperationException($"Error executing command: {error}");
             }
         }
-
-
-
 
     }
 }

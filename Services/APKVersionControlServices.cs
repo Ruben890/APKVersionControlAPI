@@ -21,60 +21,61 @@ namespace APKVersionControlAPI.Services
         {
             try
             {
-                // Verificar que el archivo tenga contenido
+                // Check if the file has content
                 if (file == null || file.Length <= 0)
                 {
-                    throw new ArgumentException("El archivo está vacío o no se ha recibido.");
+                    throw new ArgumentException("The file is empty or has not been received.");
                 }
 
-                // Validar que el archivo sea un APK
+                // Validate that the file is an APK
                 if (!string.Equals(Path.GetExtension(file.FileName), ".apk", StringComparison.OrdinalIgnoreCase))
                 {
-                    throw new ArgumentException("El archivo no es un APK válido.");
+                    throw new ArgumentException("The file is not a valid APK.");
                 }
 
-                // Ruta para guardar el archivo dentro de wwwroot/Files
+                // Path to save the file within wwwroot/Files
                 string folderPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "Files");
 
-                // Crear la carpeta 'Files' si no existe
+                // Create the 'Files' folder if it does not exist
                 if (!Directory.Exists(folderPath))
                 {
                     Directory.CreateDirectory(folderPath);
                 }
 
-                // Extraer información del archivo APK (usando un servicio/apkProcessor personalizado)
+                // Extract information from the APK file (using a custom service/apkProcessor)
                 ApkFileDto? apkInfo = null;
                 using (var stream = file.OpenReadStream())
                 {
-                    // Método personalizado para extraer información del APK
+                    // Custom method to extract information from the APK
                     apkInfo = _apkProcessor.ExtractApkInfo(null, stream);
                 }
 
                 if (apkInfo == null)
                 {
-                    throw new ArgumentException("No se pudo extraer la información del APK.");
+                    throw new ArgumentException("Could not extract information from the APK.");
                 }
 
-                // Ruta completa para el archivo
-                string sanitizedFileName = Path.GetFileNameWithoutExtension(file.FileName); // Nombre sin extensión
-                sanitizedFileName = sanitizedFileName.Replace(" ", "_");
-                string fileName = $"{sanitizedFileName}-{apkInfo.Version}/{apkInfo.CreatedAt}.apk";
+                // Full path for the file
+                string sanitizedFileName = Path.GetFileNameWithoutExtension(file.FileName).Replace(" ", "_").Replace(".", "_").ToLower();
+
+                string fileName = $"{sanitizedFileName}-{apkInfo.Version}--{apkInfo.CreatedAt?.ToString("yyyyMMdd")}.apk";
                 string filePath = Path.Combine(folderPath, fileName);
 
-                // Guardar el archivo en la carpeta 'Files'
+                // Save the file to the 'Files' folder
                 await using (var stream = new FileStream(filePath, FileMode.Create))
                 {
                     await file.CopyToAsync(stream);
                 }
 
-                return $"Archivo APK recibido y guardado correctamente en: {filePath}";
+                return "APK file received and saved successfully.";
             }
             catch (Exception ex)
             {
-                // Manejar cualquier error
+                // Handle any errors
                 return $"Error: {ex.Message}";
             }
         }
+
 
 
 

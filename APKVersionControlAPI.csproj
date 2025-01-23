@@ -30,14 +30,13 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<!-- Archivo AXMLPrinter2.jar -->
-		<None Include="AXMLPrinter2.jar">
-			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-		</None>
+		<None Include="Infrastructure\Repository\ApkProcessor.cs" />
 	</ItemGroup>
 
 	<ItemGroup>
-		<None Include="Infrastructure\Repository\ApkProcessor.cs" />
+	  <None Update="Lib\AXMLPrinter2.jar">
+	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  </None>
 	</ItemGroup>
 
 </Project>
