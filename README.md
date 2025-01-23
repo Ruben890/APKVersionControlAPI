@@ -3,13 +3,13 @@
 
 ![Screenshot 1](./api_image.png)
 
-Esta API está diseñada para manejar y administrar archivos APK, permitiendo a los usuarios obtener información detallada sobre los archivos APK, como la versión, el nombre, y otros metadatos. La API utiliza Java 8 y la librería `AXMLPrinter2.jar` para extraer la información de los archivos APK y presentarla en formato JSON.
+Esta API está diseñada para manejar y administrar archivos APK, permitiendo a los usuarios obtener información detallada sobre los archivos APK, como la versión, el nombre, y otros metadatos. La API utiliza Java y la librería `AXMLPrinter2.jar` para extraer la información de los archivos APK y presentarla en formato JSON.
 
 ## Requisitos Previos
 
 Para que la API funcione correctamente, es necesario tener instalado:
 
-- **Java 8**: Asegúrate de tener Java 8 instalado en tu sistema. Puedes verificar la versión de Java ejecutando el siguiente comando en tu terminal:
+- **Java 8**: Asegúrate de tener Java 8 o una version superior instalada en tu sistema. Puedes verificar la versión de Java ejecutando el siguiente comando en tu terminal:
   ```bash
   java -version
   ```
