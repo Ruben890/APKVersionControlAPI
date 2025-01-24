@@ -1,5 +1,4 @@
-﻿
-# Documentación de la API de Gestión de Archivos APK
+﻿# Documentación de la API de Gestión de Archivos APK
 
 ![Screenshot 1](./api_image.png)
 
@@ -178,6 +177,20 @@ La API incluye un job programado que se ejecuta periódicamente para eliminar ar
 2. **Criterios de Eliminación**: Elimina archivos APK cuya fecha de creación sea mayor a dos meses.
 3. **Registro de Actividades**: El job registra las operaciones de eliminación en los logs del sistema para su seguimiento.
 
+## Límite de Subida de Archivos APK
+
+La API tiene un límite de subida de archivos APK de **2 GB**. Si necesitas cambiar este límite, puedes hacerlo modificando la configuración en el archivo de configuración de la API. Para ello, agrega o modifica la siguiente línea en tu configuración:
+
+```csharp
+builder.Services.ConfigureMaxRequestBodySize(2L * 1024 * 1024 * 1024); // 2 GB
+```
+
+Puedes ajustar el valor según tus necesidades. Por ejemplo, si deseas aumentar el límite a 5 GB, cambia el valor a:
+
+```csharp
+builder.Services.ConfigureMaxRequestBodySize(5L * 1024 * 1024 * 1024); // 5 GB
+```
+
 ## Ejemplo de Respuesta JSON
 
 ```json
@@ -197,5 +210,3 @@ La API incluye un job programado que se ejecuta periódicamente para eliminar ar
 No se requiere configuración adicional más allá de tener Java 8 instalado y asegurarse de que `AXMLPrinter2.jar` esté en la ruta correcta. El job de limpieza automática está configurado para ejecutarse mensualmente según la configuración del sistema.
 
 ---
-
-Esta documentación ahora incluye los detalles específicos sobre cómo descargar y eliminar archivos APK utilizando los parámetros `name`, `version`, `client`, y `isDownload`. También se explica cómo realizar búsquedas utilizando estos parámetros y la importancia de la carpeta `wwwroot` en el funcionamiento de la API.
