@@ -44,8 +44,11 @@ namespace APKVersionControlAPI.Infrastructure.Jobs
 
 
                     if (apkFile.CreatedAt < twoMonthsAgo)
-                    {
+                    {   
+                        
                         File.Delete(filePath);
+                        _repository.Delete(apkFile);
+                        await _repository.SaveAsync();
                         Console.WriteLine($"Deleted: {filePath}");
                     }
 
