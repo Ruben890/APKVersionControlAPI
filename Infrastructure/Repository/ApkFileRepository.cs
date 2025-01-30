@@ -53,8 +53,8 @@ namespace APKVersionControlAPI.Infrastructure.Repository
                     Name = x.Name,
                     Size = x.Size,
                     Version = x.Version,
-                    Client = x.Client,
                     CreatedAt = x.CreatedAt,
+                    Client = x.Client,
 
                 })
                 .ToListAsync();
