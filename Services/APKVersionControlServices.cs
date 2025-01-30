@@ -108,7 +108,7 @@ namespace APKVersionControlAPI.Services
             catch (Exception ex)
             {
                 _repository.Roolback();
-                if(File.Exists(filePath)) File.Delete(filePath);
+                if (File.Exists(filePath)) File.Delete(filePath);
                 throw new ApplicationException("An error occurred while uploading the APK file.", ex);
             }
         }
@@ -178,17 +178,24 @@ namespace APKVersionControlAPI.Services
                     throw new FileNotFoundException($"No files matching the pattern '{apkFile.FileName}' were found in {apkFile.FilePath}.");
                 }
 
+
                 // Delete all matching files
                 foreach (var filePath in matchingFiles)
                 {
+
                     File.Delete(filePath);
                     Console.WriteLine($"The file {filePath} has been successfully deleted.");
                 }
 
+                _repository.Beggin();
+                _repository.Delete(apkFile);
+                await _repository.SaveAsync();
+                _repository.Commit();
                 Console.WriteLine($"{matchingFiles.Length} file(s) were deleted successfully.");
             }
             catch (Exception ex)
             {
+                _repository.Roolback();
                 // Rethrow the exception with a custom message or handle it as needed
                 throw new Exception($"Error deleting the APK file(s): {ex.Message}", ex);
             }
