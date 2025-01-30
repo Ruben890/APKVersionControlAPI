@@ -155,7 +155,7 @@ GET /api/APKVersionControl/DownloadApkFile?Id=2&isDownload=true
 
 ### Eliminar un Archivo APK
 
-Para eliminar un archivo APK específico, realiza una solicitud HTTP DELETE al endpoint correspondiente con los parámetros `Id`.
+Para eliminar un archivo APK específico, realiza una solicitud HTTP DELETE al endpoint correspondiente con el parámetro `Id`.
 
 **Ejemplo de solicitud:**
 ```http
