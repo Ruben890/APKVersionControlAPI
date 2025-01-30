@@ -60,20 +60,15 @@ namespace APKVersionControlAPI.Controllers
         /// Los parámetros Name y Version deben coincidir exactamente con los nombres proporcionados por el endpoint GetAllApk.
         /// </remarks>
         [HttpGet("DownloadApkFile")]
-        public IActionResult DownloadApkFile([FromQuery] GenericParameters parameters)
+        public async Task<IActionResult> DownloadApkFile([FromQuery] DownloadParameters parameters)
         {
             var response = new BaseResponse();
             try
             {
 
-                if (string.IsNullOrWhiteSpace(parameters.Name))
-                {
-                    response.Messages = "The 'Name' parameter is required and cannot be empty or whitespace.";
-                    return BadRequest(response);
-                }
 
                 // Buscar el archivo
-                string filePath = _aPKVersionControl.FindFileForDownload(parameters);
+                string filePath = await _aPKVersionControl.FindFileForDownload(parameters);
 
                 // Verificar si el archivo existe
                 if (!System.IO.File.Exists(filePath))

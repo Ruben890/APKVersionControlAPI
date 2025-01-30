@@ -26,6 +26,7 @@ bld/
 [Oo]bj/
 [Ll]og/
 
+/Migrations/*
 # Ignorar archivos con extensión .apk
 *.apk
 *.zip

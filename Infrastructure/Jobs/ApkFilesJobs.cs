@@ -1,4 +1,5 @@
 ﻿using APKVersionControlAPI.Interfaces;
+using APKVersionControlAPI.Interfaces.IRepository;
 using Hangfire;
 using System.Globalization;
 
@@ -8,13 +9,15 @@ namespace APKVersionControlAPI.Infrastructure.Jobs
     {
         private readonly IBackgroundJobClient _backgroundJob;
 
-        public ApkFilesJobs(IBackgroundJobClient backgroundJob)
+        private readonly IApkFileRepository _repository;
+
+        public ApkFilesJobs(IBackgroundJobClient backgroundJob, IApkFileRepository repository)
         {
             _backgroundJob = backgroundJob;
+            _repository = repository;
         }
 
-
-        public void DeleteFilesOlderThan2Months()
+        public async Task DeleteFilesOlderThan2Months()
         {
             var baseFolderPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "Files");
 
@@ -23,35 +26,45 @@ namespace APKVersionControlAPI.Infrastructure.Jobs
                 throw new DirectoryNotFoundException($"The directory {baseFolderPath} does not exist.");
             }
 
-            // Obtener todos los archivos APK en el directorio sin cargar todos a memoria
-            var apkFilePaths = Directory.EnumerateFiles(baseFolderPath, "*.apk", SearchOption.AllDirectories);
+            // Obtener todos los archivos APK almacenados en la base de datos
+            var apkFiles = await _repository.GetApkFileAll();
 
-            // Fecha actual menos dos meses
+            // Fecha límite (dos meses atrás)
             var twoMonthsAgo = DateTime.Now.AddMonths(-2);
 
-            foreach (var filePath in apkFilePaths)
+            foreach (var apkFile in apkFiles)
             {
                 try
                 {
-                    // Extraer la fecha del nombre del archivo
-                    var fileName = Path.GetFileNameWithoutExtension(filePath); // Obtiene el nombre sin extensión
-                    var dateString = fileName.Split(new[] { "--" }, StringSplitOptions.None).Last(); // Extrae la fecha después de "--"
-                    var fileDate = DateTime.ParseExact(dateString, "yyyyMMdd", CultureInfo.InvariantCulture); // Parsea la fecha en formato "yyyyMMdd"
+                    if (apkFile.FilePath == null) continue;
 
-                    // Si la fecha del archivo es anterior a dos meses, eliminarlo
-                    if (fileDate < twoMonthsAgo)
+                    var filePath = Path.Combine(baseFolderPath, apkFile.FilePath);
+
+                    if (!File.Exists(filePath)) continue;
+
+                    var dateString = apkFile.FileName!.Split(new[] { "--" }, StringSplitOptions.None).Last();
+
+                    if (DateTime.TryParseExact(dateString, "yyyyMMdd", CultureInfo.InvariantCulture, DateTimeStyles.None, out var fileDate))
                     {
-                        File.Delete(filePath);
-                        Console.WriteLine($"Deleted: {filePath}");
+                        if (fileDate < twoMonthsAgo)
+                        {
+                            File.Delete(filePath);
+                            Console.WriteLine($"Deleted: {filePath}");
+                        }
+                    }
+                    else
+                    {
+                        Console.WriteLine($"Skipping file (invalid date format): {filePath}");
                     }
                 }
                 catch (Exception ex)
                 {
-                    // Manejar errores (por ejemplo, formato de fecha incorrecto)
-                    Console.WriteLine($"Error processing file {filePath}: {ex.Message}");
+                    Console.WriteLine($"Error processing file {apkFile.FilePath}: {ex.Message}");
                 }
             }
         }
+
+
 
         public void RegisterRecurringJobs()
         {

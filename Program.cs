@@ -1,4 +1,5 @@
 ﻿using APKVersionControlAPI.Extencions;
+using APKVersionControlAPI.Infrastructure;
 using APKVersionControlAPI.Infrastructure.Repository;
 using APKVersionControlAPI.Interfaces.IRepository;
 using APKVersionControlAPI.Interfaces.IServices;
@@ -8,11 +9,16 @@ using Hangfire.MemoryStorage;
 using HealthCenterAPI.Extencion;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Server.Kestrel.Core;
+using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json.Serialization;
 using Scalar.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
+
+// Agregar SqlLiteContext al contenedor de servicios
+builder.Services.AddDbContext<SqlLiteContext>(options =>
+    options.UseSqlite($"Data Source={Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "apkVersing.db")}"));
 
 builder.Services.ConfigureMaxRequestBodySize(2L * 1024 * 1024 * 1024); // 2 GB
 builder.Services.AddControllers();
@@ -20,7 +26,7 @@ builder.Services.AddOpenApi();
 builder.Services.Configure<IISOptions>(options => { });
 builder.Services.AddHangfire(config => config.UseMemoryStorage());
 builder.Services.AddScoped<IAPKVersionControlServices, APKVersionControlServices>();
-builder.Services.AddScoped<IApkProcessor, ApkProcessor>();
+builder.Services.AddScoped<IApkFileRepository, ApkFileRepository>();
 builder.Services.ConfigureBackgroundJobs();
 builder.Services.AddHangfireServer();
 builder.Services.AddOpenApi();
@@ -47,7 +53,12 @@ if (app.Environment.IsProduction())
     app.UseHttpsRedirection();
 }
 
-
+// Asegura que la base de datos esté creada
+using (var scope = app.Services.CreateScope())
+{
+    var dbContext = scope.ServiceProvider.GetRequiredService<SqlLiteContext>();
+    dbContext.Database.EnsureCreated(); // Crea la base de datos y las tablas si no existen
+}
 
 app.UseForwardedHeaders(new ForwardedHeadersOptions
 {
@@ -70,6 +81,7 @@ if (app.Environment.IsDevelopment())
     app.UseHangfireDashboard();
 }
 
+SQLitePCL.Batteries.Init();
 app.UseCors("CorsPolicy");
 app.UseRouting();
 app.MapControllers();

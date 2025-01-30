@@ -1,26 +1,33 @@
-﻿using APKVersionControlAPI.Interfaces.IRepository;
+﻿using APKVersionControlAPI.Entity;
+using APKVersionControlAPI.Interfaces.IRepository;
 using APKVersionControlAPI.Interfaces.IServices;
 using APKVersionControlAPI.Shared;
 using APKVersionControlAPI.Shared.Dto;
 using APKVersionControlAPI.Shared.QueryParameters;
+using APKVersionControlAPI.Shared.Utils;
 using Microsoft.AspNetCore.Http;
+using Microsoft.EntityFrameworkCore;
 using System;
+using System.Diagnostics;
 using System.IO;
 using System.IO.Compression;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using System.Xml;
 
 namespace APKVersionControlAPI.Services
 {
     public class APKVersionControlServices : IAPKVersionControlServices
     {
-        private readonly IApkProcessor _apkProcessor;
-        public APKVersionControlServices(IApkProcessor processor)
+        private readonly IApkFileRepository _repository;
+        public APKVersionControlServices(IApkFileRepository repository)
         {
-            _apkProcessor = processor;
+            _repository = repository;
         }
 
         public async Task<string?> UploadApkFile(IFormFile file, string? client = null)
         {
+            string? filePath = null;
             try
             {
                 // Verifica si el archivo tiene contenido
@@ -55,14 +62,14 @@ namespace APKVersionControlAPI.Services
                     }
                 }
 
-                // Extrae información del archivo APK
-                ApkFileDto? apkInfo;
+                // Extrae la version  del archivo APK
+                string? version;
                 using (var stream = file.OpenReadStream())
                 {
-                    apkInfo = await _apkProcessor.ExtractApkInfoAsync(null, stream);
+                    version = await ExtractApkVersionAsync(baseFolderPath, stream);
                 }
 
-                if (apkInfo == null)
+                if (string.IsNullOrWhiteSpace(version))
                 {
                     throw new ArgumentException("Could not extract information from the APK.");
                 }
@@ -71,8 +78,8 @@ namespace APKVersionControlAPI.Services
                 string sanitizedFileName = SanitizeFileName(Path.GetFileNameWithoutExtension(file.FileName));
 
                 // Nombre del archivo con versión y fecha
-                string fileName = $"{sanitizedFileName}-{apkInfo.Version}--{apkInfo.CreatedAt:yyyyMMdd}.apk";
-                string filePath = Path.Combine(folderPath, fileName);
+                string fileName = $"{sanitizedFileName}-{version}--{DateTime.Now:yyyyMMdd}.apk";
+                filePath = Path.Combine(folderPath, fileName);
 
                 // Guarda el archivo en la carpeta correspondiente
                 await using (var stream = new FileStream(filePath, FileMode.Create))
@@ -80,38 +87,63 @@ namespace APKVersionControlAPI.Services
                     await file.CopyToAsync(stream);
                 }
 
+                var apkFile = new ApkFile
+                {
+                    Name = Path.GetFileNameWithoutExtension(file.FileName),
+                    Size = Math.Round(file.Length / (1024.0 * 1024.0), 2),
+                    CreatedAt = DateTime.Now,
+                    FilePath = filePath,
+                    Version = version,
+                    FileName = fileName,
+                    Client = client ?? null,
+                };
+
+                _repository.Beggin();
+                await _repository.Insert(apkFile);
+                await _repository.SaveAsync();
+                _repository.Commit();
+
                 return "APK file received, processed, and saved successfully.";
             }
             catch (Exception ex)
             {
-                // Registrar el error y lanzar una excepción personalizada
+                _repository.Roolback();
+                if(File.Exists(filePath)) File.Delete(filePath);
                 throw new ApplicationException("An error occurred while uploading the APK file.", ex);
             }
         }
 
-
         public async Task<IEnumerable<ApkFileDto>> GetApkFiles(GenericParameters parameters) =>
-            await _apkProcessor.GetAllApkAsync(parameters);
+            await _repository.GetAllApkAsync(parameters);
 
-        public string FindFileForDownload(GenericParameters parameters)
+        public async Task<string> FindFileForDownload(DownloadParameters parameters)
         {
             // Validar que IsDownload sea true
-            if (!parameters.IsDownload.HasValue || !parameters.IsDownload.Value)
+            if (parameters.IsDownload is not true)
             {
                 throw new ArgumentException("IsDownload must be true to proceed with the download.");
             }
 
-            var baseDirectory = ValidateAndGetBaseDirectory(parameters);
+            // Obtener el archivo desde la base de datos
+            var apkFile = await _repository.GetApkFileById(parameters.Id ?? throw new ArgumentNullException(nameof(parameters.Id), "Id must not be null."));
 
-            // Construir el patrón de búsqueda
-            string searchPattern = $"{parameters.Name}-{parameters.Version}--*.apk";
+            if (apkFile == null)
+            {
+                throw new FileNotFoundException($"No APK file found with Id {parameters.Id}");
+            }
+
+            // Validar que los campos requeridos no sean null o vacíos
+            if (string.IsNullOrWhiteSpace(apkFile.FilePath) || string.IsNullOrWhiteSpace(apkFile.FileName))
+            {
+                throw new InvalidOperationException($"FilePath or FileName is invalid for APK file with Id {parameters.Id}");
+            }
 
             // Buscar archivos que coincidan con el patrón
-            var files = Directory.GetFiles(baseDirectory, searchPattern, SearchOption.TopDirectoryOnly);
+            var files = Directory.GetFiles(apkFile.FilePath, apkFile.FileName, SearchOption.TopDirectoryOnly);
 
             if (files.Length == 0)
             {
-                throw new FileNotFoundException($"No file found with name {parameters.Name} and version {parameters.Version}.");
+                throw new FileNotFoundException($"No file found in directory {apkFile.FilePath} with name {apkFile.FileName}");
             }
 
             // Devolver la ruta del primer archivo encontrado
@@ -180,10 +212,149 @@ namespace APKVersionControlAPI.Services
             return baseDirectory;
         }
 
+        private async Task<string> ExtractApkVersionAsync(string filePath, Stream apkFileStream)
+        {
+            if (apkFileStream == null || !apkFileStream.CanRead)
+            {
+                throw new ArgumentException("The data stream is invalid.", nameof(apkFileStream));
+            }
+
+            // Crear un directorio temporal para extraer el contenido del APK
+            string tempPath = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
+            Directory.CreateDirectory(tempPath);
+            string? version = null;
+
+            try
+            {
+                string tempApkPath = Path.Combine(tempPath, "temp.apk");
+
+                // Guardar el stream en un archivo temporal
+                await using (var fileStream = new FileStream(tempApkPath, FileMode.Create, FileAccess.Write))
+                {
+                    await apkFileStream.CopyToAsync(fileStream);
+                }
+
+                // Descomprimir el archivo APK
+                await Task.Run(() => APKExtractor.ExtractAPK(tempApkPath, tempPath));
+
+                // Buscar el archivo AndroidManifest.xml en el directorio descomprimido
+                string manifestPath = Path.Combine(tempPath, "AndroidManifest.xml");
+
+                if (File.Exists(manifestPath))
+                {
+                    version = await ExtractVersionFromManifestAsync(manifestPath, tempPath);
+                }
+            }
+            finally
+            {
+                Directory.Delete(tempPath, true);
+            }
+
+            return version ??= null!;
+
+        }
+
+        private static async Task<string?> GetJavaVersionAsync()
+        {
+            try
+            {
+                var process = new Process
+                {
+                    StartInfo = new ProcessStartInfo
+                    {
+                        FileName = "java",
+                        Arguments = "-version",
+                        RedirectStandardError = true,
+                        UseShellExecute = false,
+                        CreateNoWindow = true
+                    }
+                };
+
+                process.Start();
+                string output = await process.StandardError.ReadToEndAsync();
+                await process.WaitForExitAsync();
+
+                // Extraer la versión de Java
+                var match = Regex.Match(output, @"\d+\.\d+\.\d+");
+                return match.Success ? match.Value : null;
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
+        private static async Task ExecuteCommandAsync(string command)
+        {
+            bool isWindows = OperatingSystem.IsWindows();
+            var process = new Process
+            {
+                StartInfo = new ProcessStartInfo
+                {
+                    FileName = isWindows ? "cmd.exe" : "/bin/bash",
+                    Arguments = isWindows ? $"/C {command}" : $"-c \"{command}\"",
+                    RedirectStandardOutput = true,
+                    RedirectStandardError = true,
+                    UseShellExecute = false,
+                    CreateNoWindow = true
+                }
+            };
+
+            process.Start();
+            await process.WaitForExitAsync();
+
+            if (process.ExitCode != 0)
+            {
+                string error = await process.StandardError.ReadToEndAsync();
+                throw new InvalidOperationException($"Error executing command: {error}");
+            }
+        }
+
+        /// <summary>
+        /// Método separado para extraer la versión del AndroidManifest.xml
+        /// </summary>
+        /// <param name="manifestPath"></param>
+        /// <param name="tempPath"></param>
+        /// <returns></returns>
+        /// <exception cref="InvalidOperationException"></exception>
+        private static async Task<string?> ExtractVersionFromManifestAsync(string manifestPath, string tempPath)
+        {
+            string? version = null;
+            // Validar si Java 8 o superior está instalado
+            var javaVersion = await GetJavaVersionAsync();
+            if (javaVersion == null || (!javaVersion.StartsWith("1.8") && !int.TryParse(javaVersion.Split('.')[0], out var major) && major < 8))
+            {
+                throw new InvalidOperationException("Java 8 or higher is not installed.");
+            }
+
+            // Generar archivo decodificado usando AXMLPrinter2.jar
+            string decodedManifestPath = Path.Combine(tempPath, "ManifestDecode.xml");
+
+            // Ruta del archivo JAR en el directorio raíz del proyecto
+            string jarPath = Path.Combine(Directory.GetCurrentDirectory(), "Shared", "Lib", "AXMLPrinter2.jar");
+
+            string command = $"java -jar \"{jarPath}\" \"{manifestPath}\" > \"{decodedManifestPath}\"";
+            await ExecuteCommandAsync(command);
+
+            if (File.Exists(decodedManifestPath))
+            {
+                XmlDocument xmlDoc = new XmlDocument();
+                xmlDoc.Load(decodedManifestPath);
+
+                XmlNode manifestNode = xmlDoc.SelectSingleNode("/manifest")!;
+                if (manifestNode != null)
+                {
+                    version = manifestNode.Attributes?["android:versionName"]?.Value;
+                }
+            }
+
+            return version;
+        }
+
         /// <summary>
         /// Sanitiza el nombre del archivo para eliminar caracteres no válidos.
         /// </summary>
-        private string SanitizeFileName(string fileName)
+        private static string SanitizeFileName(string fileName)
         {
             if (string.IsNullOrWhiteSpace(fileName))
             {
@@ -201,5 +372,7 @@ namespace APKVersionControlAPI.Services
 
             return sanitized;
         }
+
+
     }
 }
