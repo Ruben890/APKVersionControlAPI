@@ -38,7 +38,7 @@ namespace APKVersionControlAPI.Infrastructure.Jobs
                 {
                     if (apkFile.FilePath == null) continue;
 
-                    var filePath = Path.Combine(baseFolderPath, apkFile.FilePath);
+                    var filePath = File.Combine(apkFile.filePath, apkFile.FileName) 
 
                     if (!File.Exists(filePath)) continue;
 
