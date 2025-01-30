@@ -42,20 +42,13 @@ namespace APKVersionControlAPI.Infrastructure.Jobs
 
                     if (!File.Exists(filePath)) continue;
 
-                    var dateString = apkFile.FileName!.Split(new[] { "--" }, StringSplitOptions.None).Last();
 
-                    if (DateTime.TryParseExact(dateString, "yyyyMMdd", CultureInfo.InvariantCulture, DateTimeStyles.None, out var fileDate))
+                    if (apkFile.CreatedAt < twoMonthsAgo)
                     {
-                        if (fileDate < twoMonthsAgo)
-                        {
-                            File.Delete(filePath);
-                            Console.WriteLine($"Deleted: {filePath}");
-                        }
+                        File.Delete(filePath);
+                        Console.WriteLine($"Deleted: {filePath}");
                     }
-                    else
-                    {
-                        Console.WriteLine($"Skipping file (invalid date format): {filePath}");
-                    }
+
                 }
                 catch (Exception ex)
                 {
@@ -63,8 +56,6 @@ namespace APKVersionControlAPI.Infrastructure.Jobs
                 }
             }
         }
-
-
 
         public void RegisterRecurringJobs()
         {
