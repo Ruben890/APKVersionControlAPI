@@ -7,7 +7,7 @@ namespace APKVersionControlAPI.Interfaces.IRepository
     public interface IApkFileRepository
     {
        
-        Task<List<ApkFileDto>> GetAllApkAsync(GenericParameters? parameters);
+        Task<List<ApkFileDto>> GetAllApkAsync(GenericParameters parameters);
         Task<ApkFile> GetApkFileById(int Id);
         Task<List<ApkFile>> GetApkFileAll();
         Task Insert(ApkFile file);

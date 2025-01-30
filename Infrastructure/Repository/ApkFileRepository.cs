@@ -21,27 +21,32 @@ namespace APKVersionControlAPI.Infrastructure.Repository
             _context = context;
         }
 
-        public async Task<List<ApkFileDto>> GetAllApkAsync(GenericParameters? parameters)
+        public async Task<List<ApkFileDto>> GetAllApkAsync(GenericParameters parameters)
         {
 
             var query = _context.ApkFiles.AsNoTracking()
                             .AsQueryable();
 
 
-            if (parameters != null)
-            {
-                // Filtrar por versión solo si se ha proporcionado
-                if (!string.IsNullOrWhiteSpace(parameters.Version))
-                {
-                    query = query.Where(x => x.Version!.Equals(parameters.Version));
-                }
 
-                // Filtrar por nombre solo si se ha proporcionado
-                if (!string.IsNullOrWhiteSpace(parameters.Name))
-                {
-                    query = query.Where(x => x.Name!.Contains(parameters.Name, StringComparison.OrdinalIgnoreCase));
-                }
+            // Filtrar por versión solo si se ha proporcionado
+            if (!string.IsNullOrWhiteSpace(parameters.Version))
+            {
+                query = query.Where(x => x.Version != null && x.Version.ToLower() == parameters.Version.ToLower());
             }
+
+            // Filtrar por Client solo si se ha proporcionado
+            if (!string.IsNullOrWhiteSpace(parameters.Client))
+            {
+                query = query.Where(x => x.Client != null && x.Client.ToLower().Contains(parameters.Client.ToLower()));
+            }
+
+            // Filtrar por nombre solo si se ha proporcionado
+            if (!string.IsNullOrWhiteSpace(parameters.Name))
+            {
+                query = query.Where(x => x.Name != null && x.Name.ToLower().Contains(parameters.Name.ToLower()));
+            }
+
 
             // Ordenar por versión y fecha de creación (descendente)
             var sortedApkFiles = await query
