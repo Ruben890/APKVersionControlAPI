@@ -17,7 +17,7 @@ Para que la API funcione correctamente, es necesario tener instalado:
   ```bash
   dotnet --version
   ```
-
+  **Java**: Asegurate de tener Java instalado preferiblemente java 8 o versiones posteriores.
 
 - **SQLite**: La base de datos SQLite se creará automáticamente al ejecutar la aplicación. No es necesario instalar SQLite manualmente.
 
