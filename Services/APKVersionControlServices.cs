@@ -92,7 +92,7 @@ namespace APKVersionControlAPI.Services
                     Name = Path.GetFileNameWithoutExtension(file.FileName),
                     Size = Math.Round(file.Length / (1024.0 * 1024.0), 2),
                     CreatedAt = DateTime.Now,
-                    FilePath = filePath,
+                    FilePath = folderPath,
                     Version = version,
                     FileName = fileName,
                     Client = client ?? null,
