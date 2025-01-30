@@ -23,35 +23,26 @@ namespace APKVersionControlAPI.Infrastructure.Repository
 
         public async Task<List<ApkFileDto>> GetAllApkAsync(GenericParameters parameters)
         {
+            var query = _context.ApkFiles.AsNoTracking();
 
-            var query = _context.ApkFiles.AsNoTracking()
-                            .AsQueryable();
-
-
-
-            // Filtrar por versión solo si se ha proporcionado
             if (!string.IsNullOrWhiteSpace(parameters.Version))
             {
-                query = query.Where(x => x.Version != null && x.Version.ToLower() == parameters.Version.ToLower());
+                query = query.Where(x => x.Version != null && x.Version == parameters.Version);
             }
 
-            // Filtrar por Client solo si se ha proporcionado
             if (!string.IsNullOrWhiteSpace(parameters.Client))
             {
-                query = query.Where(x => x.Client != null && x.Client.ToLower().Contains(parameters.Client.ToLower()));
+                query = query.Where(x => x.Client != null && EF.Functions.Like(x.Client, $"%{parameters.Client}%"));
             }
 
-            // Filtrar por nombre solo si se ha proporcionado
             if (!string.IsNullOrWhiteSpace(parameters.Name))
             {
-                query = query.Where(x => x.Name != null && x.Name.ToLower().Contains(parameters.Name.ToLower()));
+                query = query.Where(x => x.Name != null && EF.Functions.Like(x.Name, $"%{parameters.Name}%"));
             }
 
-
-            // Ordenar por versión y fecha de creación (descendente)
             var sortedApkFiles = await query
-                .OrderByDescending(x => x.Version)  // Comparar las versiones
-                .ThenByDescending(x => x.CreatedAt)  // Ordenar por fecha de creación
+                .OrderByDescending(x => x.Version)
+                .ThenByDescending(x => x.CreatedAt)
                 .Select(x => new ApkFileDto
                 {
                     Id = x.Id,
@@ -59,15 +50,13 @@ namespace APKVersionControlAPI.Infrastructure.Repository
                     Size = x.Size,
                     Version = x.Version,
                     CreatedAt = x.CreatedAt,
-                    Client = x.Client,
-
+                    Client = x.Client
                 })
                 .ToListAsync();
 
-            // Marcar la versión actual y la anterior
-            if (sortedApkFiles.Count > 0)
+            if (sortedApkFiles.Any())
             {
-                sortedApkFiles[0].IsCurrentVersion = true;
+                sortedApkFiles.First().IsCurrentVersion = true;
                 if (sortedApkFiles.Count > 1)
                 {
                     sortedApkFiles[1].IsPreviousVersion = true;
@@ -76,6 +65,7 @@ namespace APKVersionControlAPI.Infrastructure.Repository
 
             return sortedApkFiles;
         }
+
 
         public async Task<ApkFile> GetApkFileById(int Id) =>
             await _context.ApkFiles.Where(x => x.Id.Equals(Id)).FirstOrDefaultAsync();
