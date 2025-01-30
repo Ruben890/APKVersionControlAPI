@@ -150,23 +150,32 @@ namespace APKVersionControlAPI.Services
             return files.First();
         }
 
-        public void DeleteApkFile(GenericParameters parameters)
+        public async Task DeleteApkFile(int Id)
         {
             try
             {
-                // Get the validated base directory
-                var baseDirectory = ValidateAndGetBaseDirectory(parameters);
+                // Obtener el archivo desde la base de datos
+                var apkFile = await _repository.GetApkFileById(Id);
 
-                // Build the search pattern
-                string searchPattern = $"{parameters.Name}-{parameters.Version}--*.apk";
+
+                if (apkFile == null)
+                {
+                    throw new FileNotFoundException($"No APK file found with Id {Id}");
+                }
+
+                // Validar que los campos requeridos no sean null o vacíos
+                if (string.IsNullOrWhiteSpace(apkFile.FilePath) || string.IsNullOrWhiteSpace(apkFile.FileName))
+                {
+                    throw new InvalidOperationException($"FilePath or FileName is invalid for APK file with Id {Id}");
+                }
 
                 // Find all files matching the pattern
-                var matchingFiles = Directory.GetFiles(baseDirectory, searchPattern, SearchOption.TopDirectoryOnly);
+                var matchingFiles = Directory.GetFiles(apkFile.FilePath, apkFile.FileName, SearchOption.TopDirectoryOnly);
 
                 // Check if any files were found
                 if (matchingFiles.Length == 0)
                 {
-                    throw new FileNotFoundException($"No files matching the pattern '{searchPattern}' were found in {baseDirectory}.");
+                    throw new FileNotFoundException($"No files matching the pattern '{apkFile.FileName}' were found in {apkFile.FilePath}.");
                 }
 
                 // Delete all matching files
@@ -183,33 +192,6 @@ namespace APKVersionControlAPI.Services
                 // Rethrow the exception with a custom message or handle it as needed
                 throw new Exception($"Error deleting the APK file(s): {ex.Message}", ex);
             }
-        }
-
-        private string ValidateAndGetBaseDirectory(GenericParameters parameters)
-        {
-
-            // Validar que Name y Version no sean nulos o vacíos
-            if (string.IsNullOrEmpty(parameters.Name) || string.IsNullOrEmpty(parameters.Version))
-            {
-                throw new ArgumentException("Name and Version must be provided.");
-            }
-
-            // Determinar el directorio base
-            string baseDirectory = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "Files");
-
-            // Si el cliente no es nulo o vacío, agregarlo al path
-            if (!string.IsNullOrWhiteSpace(parameters.Client))
-            {
-                baseDirectory = Path.Combine(baseDirectory, parameters.Client);
-            }
-
-            // Verificar si el directorio existe
-            if (!Directory.Exists(baseDirectory))
-            {
-                throw new DirectoryNotFoundException($"The directory {baseDirectory} does not exist.");
-            }
-
-            return baseDirectory;
         }
 
         private async Task<string> ExtractApkVersionAsync(string filePath, Stream apkFileStream)
@@ -372,7 +354,6 @@ namespace APKVersionControlAPI.Services
 
             return sanitized;
         }
-
 
     }
 }

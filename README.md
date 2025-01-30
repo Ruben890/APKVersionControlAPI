@@ -142,11 +142,11 @@ GET /api/APKVersionControl/GetAllApk?name=apk_mobil&version=18.67&client=x
 
 ### Descargar un Archivo APK
 
-Para descargar un archivo APK específico, realiza una solicitud HTTP GET al endpoint correspondiente con los parámetros `name`, `version`, y `isDownload=true`.
+Para descargar un archivo APK específico, realiza una solicitud HTTP GET al endpoint correspondiente con los parámetros `Id`, y `isDownload=true`.
 
 **Ejemplo de solicitud:**
 ```http
-GET /api/APKVersionControl/DownloadApkFile?name=apk_mobil&version=18.67&isDownload=true
+GET /api/APKVersionControl/DownloadApkFile?Id=2&isDownload=true
 ```
 
 **Respuesta:**
@@ -155,11 +155,11 @@ GET /api/APKVersionControl/DownloadApkFile?name=apk_mobil&version=18.67&isDownlo
 
 ### Eliminar un Archivo APK
 
-Para eliminar un archivo APK específico, realiza una solicitud HTTP DELETE al endpoint correspondiente con los parámetros `name` y `version`.
+Para eliminar un archivo APK específico, realiza una solicitud HTTP DELETE al endpoint correspondiente con los parámetros `Id`.
 
 **Ejemplo de solicitud:**
 ```http
-DELETE /api/APKVersionControl/DeleteApkFile?name=apk_mobil&version=18.67
+DELETE /api/APKVersionControl/DeleteApkFile?Id=1
 ```
 
 **Respuesta:**

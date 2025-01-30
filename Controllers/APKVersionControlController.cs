@@ -49,16 +49,6 @@ namespace APKVersionControlAPI.Controllers
             }
         }
 
-
-        /// <summary>
-        /// Descarga un archivo APK basado en la versión y el nombre proporcionados.
-        /// </summary>
-        /// <param name="parameters">Parámetros que incluyen IsDownload, Version y Name.</param>
-        /// <returns>El archivo APK solicitado.</returns>
-        /// <remarks>
-        /// IsDownload debe ser true para proceder con la descarga.
-        /// Los parámetros Name y Version deben coincidir exactamente con los nombres proporcionados por el endpoint GetAllApk.
-        /// </remarks>
         [HttpGet("DownloadApkFile")]
         public async Task<IActionResult> DownloadApkFile([FromQuery] DownloadParameters parameters)
         {
@@ -90,19 +80,19 @@ namespace APKVersionControlAPI.Controllers
 
 
         [HttpDelete("DeleteApkFile")]
-        public IActionResult DeleteApkFile([FromQuery] GenericParameters parameters)
+        public async Task<IActionResult> DeleteApkFile([FromQuery] int Id)
         {
             var response = new BaseResponse();
             try
             {
 
-                if (string.IsNullOrWhiteSpace(parameters.Name))
+                if (string.IsNullOrWhiteSpace(Id.ToString()))
                 {
-                    response.Messages = "The 'Name' parameter is required and cannot be empty or whitespace.";
+                    response.Messages = "The 'Id' parameter is required and cannot be empty or whitespace.";
                     return BadRequest(response);
                 }
 
-                _aPKVersionControl.DeleteApkFile(parameters);
+                await _aPKVersionControl.DeleteApkFile(Id);
 
                 return Ok(response.Messages = "The APK file was deleted successfully.");
             }
