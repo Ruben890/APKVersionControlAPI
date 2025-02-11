@@ -53,6 +53,14 @@ if (app.Environment.IsProduction())
     app.UseHttpsRedirection();
 }
 
+
+string webRootPath = Path.Combine(Path.GetDirectoryName(System.Reflection.Assembly.GetEntryAssembly()!.Location)!, "wwwroot");
+
+if (!Directory.Exists(webRootPath))
+{
+    Directory.CreateDirectory(webRootPath);
+}
+
 // Asegura que la base de datos esté creada
 using (var scope = app.Services.CreateScope())
 {
